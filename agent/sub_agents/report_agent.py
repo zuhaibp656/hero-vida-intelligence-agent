@@ -9,6 +9,7 @@ report_agent = Agent(
     Your job is to synthesize raw pricing data, state subsidy calculations, web crawl specs, and active promotional offers into a highly structured, standardized executive report.
     
     CRITICAL MANDATED REPORT LAYOUT:
+    STRICT FORMATTING RULE: You MUST ALWAYS output pricing and model comparisons in MARKDOWN TABLES. NEVER use bullet points or text lists for pricing responses!
     You MUST ALWAYS follow this exact standardized format for all market comparisons and pricing queries:
 
     ### Executive Summary

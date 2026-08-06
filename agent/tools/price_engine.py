@@ -118,10 +118,11 @@ def calculate_dynamic_benchmark(
     city_rules = resolve_city_rules(city_query)
     
     if not crawled_models_json:
-        # Fallback default parameter structure if crawl parsing is completely empty
+        # Fallback default parameter structure including all Hero VIDA models
         crawled_models_json = [
+            {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 4.4 kWh (NEW)", "battery_kwh": 4.4, "range_km": 175, "base_price": 149000.0, "is_vida": True},
             {"oem": "Hero VIDA", "model": "VIDA V2 Pro", "battery_kwh": 3.9, "range_km": 165, "base_price": 150000.0, "is_vida": True},
-            {"oem": "Hero VIDA", "model": "VIDA VX2 Plus", "battery_kwh": 3.4, "range_km": 143, "base_price": 120000.0, "is_vida": True},
+            {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 3.4 kWh", "battery_kwh": 3.4, "range_km": 143, "base_price": 120000.0, "is_vida": True},
             {"oem": "Hero VIDA", "model": "VIDA VX2 Go", "battery_kwh": 3.1, "range_km": 127, "base_price": 100000.0, "is_vida": True}
         ]
 
@@ -198,8 +199,9 @@ def benchmark_models_against_vida(
     """
     comp_clean = competitor_query.strip().title()
     models_to_calc = [
+        {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 4.4 kWh (NEW)", "battery_kwh": 4.4, "range_km": 175, "base_price": 149000.0, "is_vida": True},
         {"oem": "Hero VIDA", "model": "VIDA V2 Pro", "battery_kwh": 3.9, "range_km": 165, "base_price": 150000.0, "is_vida": True},
-        {"oem": "Hero VIDA", "model": "VIDA VX2 Plus", "battery_kwh": 3.4, "range_km": 143, "base_price": 120000.0, "is_vida": True},
+        {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 3.4 kWh", "battery_kwh": 3.4, "range_km": 143, "base_price": 120000.0, "is_vida": True},
         {"oem": "Hero VIDA", "model": "VIDA VX2 Go", "battery_kwh": 3.1, "range_km": 127, "base_price": 100000.0, "is_vida": True}
     ]
 
@@ -217,6 +219,7 @@ def benchmark_models_against_vida(
         })
 
     return calculate_dynamic_benchmark(models_to_calc, city_query)
+
 
 
 
