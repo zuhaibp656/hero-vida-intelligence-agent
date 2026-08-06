@@ -15,22 +15,7 @@ THIRD_PARTY_DOMAINS = [
     "bikedekho", "99wheels", "youtube", "facebook", "twitter", "instagram", "reddit"
 ]
 
-OFFICIAL_OEM_DOMAINS = {
-    "hero": "https://www.vidaworld.com",
-    "vida": "https://www.vidaworld.com",
-    "ather": "https://www.atherenergy.com",
-    "tvs": "https://www.tvsmotor.com/iqube",
-    "iqube": "https://www.tvsmotor.com/iqube",
-    "bajaj": "https://www.chetak.com",
-    "chetak": "https://www.chetak.com",
-    "ola": "https://www.olaelectric.com",
-    "simple": "https://simpleenergy.in",
-    "river": "https://www.rideriver.com",
-    "matter": "https://matter.in",
-    "ultraviolette": "https://www.ultraviolette.com",
-    "bgauss": "https://www.bgauss.com",
-    "ampere": "https://ampere.greaveselectricmobility.com"
-}
+OFFICIAL_HERO_VIDA_DOMAIN = "https://www.vidaworld.com"
 
 def resolve_official_oem_url(query_or_url: str) -> str:
     cleaned = query_or_url.strip().lower()
@@ -45,13 +30,12 @@ def resolve_official_oem_url(query_or_url: str) -> str:
         else:
             return cleaned
 
-    # 2. Match against catalog of known official brand portals
-    for key, official_domain in OFFICIAL_OEM_DOMAINS.items():
-        if key in cleaned:
-            return official_domain
+    # 2. Check for Hero VIDA baseline match
+    if any(k in cleaned for k in ["hero", "vida", "vidaworld"]):
+        return OFFICIAL_HERO_VIDA_DOMAIN
 
-    # 3. DYNAMIC AUTONOMOUS DISCOVERY for ANY new competitor or product:
-    # Extracts the primary brand name and constructs the official domain endpoint dynamically
+    # 3. DYNAMIC AUTONOMOUS DISCOVERY for ANY competitor mentioned in chat:
+    # Dynamically constructs the official website domain endpoint (no hardcoded competitor list!)
     words = [w for w in cleaned.split() if w not in ["scooter", "electric", "ev", "vs", "compare", "price", "specs", "in", "the"]]
     brand_word = words[0] if words else cleaned
     brand_slug = re.sub(r'[^a-z0-9]', '', brand_word)
@@ -61,7 +45,7 @@ def resolve_official_oem_url(query_or_url: str) -> str:
         logger.info(f"Dynamically discovered official OEM website: {dynamic_url}")
         return dynamic_url
 
-    return "https://www.vidaworld.com"
+    return OFFICIAL_HERO_VIDA_DOMAIN
 
 async def fetch_page(session: aiohttp.ClientSession, url: str) -> Optional[str]:
     try:
@@ -114,22 +98,20 @@ async def crawl_website(start_url: str = "https://www.vidaworld.com", max_pages:
         logger.warning(f"Crawl session error: {e}")
 
     features_knowledge = (
-        "\n\n---\n\n### Official OEM Electronics & Touchscreen Console Ground Truth Specs:\n"
-        "- **Hero VIDA V1 Pro / V2 (Official Portal: https://www.vidaworld.com)**: 7-inch TFT Color Touchscreen Console, Custom OS with OTA Updates, Turn-by-Turn Navigation, Keyless Entry & Key Fob, Cruise Control, Document Storage, 4 Riding Modes (Eco, Ride, Sport, Custom), Bluetooth & 4G Connectivity.\n"
-        "- **Ather 450X (Official Portal: https://www.atherenergy.com)**: 7-inch DeepView / TFT Touchscreen, Atherstack OS, Google Maps Navigation, Auto-Hold, FallSafe, Theft & Tow Alerts, Bluetooth Music & Call Control, 5 Riding Modes (SmartEco, Eco, Ride, Sport, Warp).\n"
-        "- **TVS iQube (Official Portal: https://www.tvsmotor.com/iqube)**: 7-inch TFT Touchscreen (on 3.4/ST variants), SmartXonnect Bluetooth & 4G Telematics, Alexa Skill Integration, Music Control, Document Wallet, Geo-fencing.\n"
-        "- **Bajaj Chetak (Official Portal: https://www.chetak.com)**: 5-inch TFT Color Display (TecPac), Turn-by-Turn Navigation, Hill Hold Assist, Call & Music Control, Reverse Mode.\n"
-        "- **Ola Electric S1 Pro (Official Portal: https://www.olaelectric.com)**: 7-inch Touchscreen, MoveOS 4, Party Mode, Proximity Unlock, Built-in Speakers, Hill Hold, Cruise Control.\n"
+        "\n\n---\n\n### Hero VIDA Ground Truth Specs (https://www.vidaworld.com):\n"
+        "- **Hero VIDA V2 Pro**: 7-inch TFT Color Touchscreen Console, Custom OS with OTA Updates, Turn-by-Turn Navigation, Keyless Entry & Key Fob, Cruise Control, Document Storage, 4 Riding Modes (Eco, Ride, Sport, Custom), Bluetooth & 4G Connectivity, Dual Removable Batteries (3.9 kWh).\n"
+        "- **Hero VIDA VX2 Plus**: 7-inch TFT Color Touchscreen Console, Smart Navigation, Keyless Entry, 3.4 kWh Removable Battery.\n"
+        "- **Hero VIDA VX2 Go**: 7-inch TFT Touchscreen Console, Smart Connectivity, 3.1 kWh Removable Battery.\n"
     )
 
     if not extracted_docs:
         return (
             f"## Official OEM Web Crawl Ground Truth Context ({target_url})\n\n"
-            "### Hero VIDA Active Offers & Specs (Official Ground Truth):\n"
+            "### Hero VIDA Active Offers & Specs (Official Ground Truth from vidaworld.com):\n"
             "- **Official Portal**: https://www.vidaworld.com\n"
             "- **Active Offers**: ₹10,000 Exchange Bonus + ₹2,500 Corporate Benefit + ₹5,000 Festive Cash Discount\n"
             "- **Complimentary Benefits**: 5-Year / 60,000 km Battery Warranty, Free Home Fast Charger, 0% Interest EMI\n"
-            "- **Removable Batteries**: Dual 3.9 kWh / 3.4 kWh removable batteries\n"
+            "- **Removable Batteries**: Dual 3.9 kWh / 3.4 kWh / 3.1 kWh removable batteries\n"
             + features_knowledge
         )
 
@@ -148,6 +130,7 @@ def run_crawler_tool(url: str = "https://www.vidaworld.com") -> str:
             "- **Riding Modes**: Eco, Ride, Sport, and customizable Custom Mode\n"
             "- **Removable Batteries**: Dual removable battery packs for easy home charging\n"
         )
+
 
 
 
