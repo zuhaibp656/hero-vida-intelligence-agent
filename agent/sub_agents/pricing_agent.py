@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import re
 
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
@@ -9,23 +10,30 @@ if parent_dir not in sys.path:
 from tools.price_engine import benchmark_models_against_vida, format_inr
 from google.adk.agents.llm_agent import Agent
 
-def compare_competitor_with_vida(competitor_name: str = "ALL", city_name: str = "delhi_ncr") -> str:
+def compare_competitor_with_vida(competitor_name: str = "NONE", city_name: str = "delhi_ncr") -> str:
     """
-    Benchmarks any competitor (e.g. 'Ather', 'Bajaj Chetak', 'TVS iQube', 'Ola', 'River Indie', or 'ALL') 
-    against Hero MotoCorp's VIDA in any Indian city (e.g. 'Bengaluru', 'Delhi', 'Mumbai', 'Pune', 'Ahmedabad').
+    Benchmarks any competitor (e.g. 'Ather', 'Bajaj Chetak', 'TVS iQube', 'Ola', or 'NONE') 
+    against Hero MotoCorp's VIDA in any Indian city or multiple cities (e.g. 'Bengaluru and Pune').
     Returns side-by-side pricing, state subsidies, active promotional offers, exchange bonuses, and price deltas vs Hero VIDA.
     """
-    records = benchmark_models_against_vida(competitor_query=competitor_name, city_query=city_name)
+    # Detect multi-city queries (e.g. "bengaluru and pune")
+    cities = [c.strip() for c in re.split(r',| and |&', city_name.strip()) if c.strip()]
+    if not cities:
+        cities = ["delhi_ncr"]
+
+    all_records = []
+    for city in cities:
+        city_records = benchmark_models_against_vida(competitor_query=competitor_name, city_query=city)
+        all_records.extend(city_records)
     
     formatted = []
-    for r in records:
-        delta_str = "Baseline" if r["is_vida_baseline"] else f"{'+' if r['delta_vs_vida'] > 0 else ''}{format_inr(r['delta_vs_vida'])}"
-        pct_str = "-" if r["is_vida_baseline"] else f"{'+' if r['pct_delta'] > 0 else ''}{r['pct_delta']}%"
+    for r in all_records:
+        delta_str = "Baseline" if r.get("is_vida_baseline") else f"{'+' if r['delta_vs_vida'] > 0 else ''}{format_inr(r['delta_vs_vida'])}"
+        pct_str = "-" if r.get("is_vida_baseline") else f"{'+' if r['pct_delta'] > 0 else ''}{r['pct_delta']}%"
         
         formatted.append({
             "oem": r["oem"],
             "model": r["model"],
-            "segment": r["segment"],
             "battery_kwh": f"{r['battery_kwh']} kWh",
             "range_km": f"{r['range_km']} km",
             "base_ex_showroom": r["base_ex_showroom"],
