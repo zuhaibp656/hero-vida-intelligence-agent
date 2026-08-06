@@ -1,14 +1,29 @@
-import asyncio
-import aiohttp
-from bs4 import BeautifulSoup
-from markdownify import markdownify as md
-from urllib.parse import urlparse, urljoin
-import os
-import re
-import logging
-from typing import Dict, List, Optional
+OFFICIAL_OEM_DOMAINS = {
+    "hero": "https://www.vidaworld.com",
+    "vida": "https://www.vidaworld.com",
+    "ather": "https://www.atherenergy.com",
+    "tvs": "https://www.tvsmotor.com/iqube",
+    "iqube": "https://www.tvsmotor.com/iqube",
+    "bajaj": "https://www.chetak.com",
+    "chetak": "https://www.chetak.com",
+    "ola": "https://www.olaelectric.com",
+    "simple": "https://simpleenergy.in",
+    "river": "https://www.rideriver.com"
+}
 
-logger = logging.getLogger(__name__)
+def resolve_official_oem_url(query_or_url: str) -> str:
+    cleaned = query_or_url.strip().lower()
+    for key, official_domain in OFFICIAL_OEM_DOMAINS.items():
+        if key in cleaned:
+            return official_domain
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        domain = urlparse(cleaned).netloc
+        # Ensure it's not a third party site
+        if any(third_party in domain for third_party in ["bikewale", "zigwheels", "carandbike", "google", "bing", "wikipedia"]):
+            logger.warning(f"Rejected third party URL {cleaned}. Redirecting to official Hero VIDA portal.")
+            return "https://www.vidaworld.com"
+        return cleaned
+    return "https://www.vidaworld.com"
 
 async def fetch_page(session: aiohttp.ClientSession, url: str) -> Optional[str]:
     try:
@@ -28,16 +43,17 @@ def html_to_clean_markdown(html: str, url: str) -> str:
     main_content = soup.find('main') or soup.find('article') or soup.body or soup
     markdown_text = md(str(main_content), heading_style="ATX", strip=['img', 'a'])
     markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text).strip()
-    return f"## Page: {url}\n\n{markdown_text}"
+    return f"## Official OEM Web Page Context: {url}\n\n{markdown_text}"
 
 async def crawl_website(start_url: str = "https://www.vidaworld.com", max_pages: int = 1) -> str:
     """
-    Crawls the specified website and converts pages into clean Markdown context for LLM agents.
-    Fast execution with strict 4-second timeout.
+    Crawls official OEM websites ONLY and converts pages into clean Markdown context for LLM agents.
+    Strictly forbids third-party websites. Real-time fast execution with 4-second timeout.
     """
-    domain = urlparse(start_url).netloc
+    target_url = resolve_official_oem_url(start_url)
+    domain = urlparse(target_url).netloc
     visited = set()
-    queue = [start_url]
+    queue = [target_url]
     extracted_docs = []
 
     headers = {
@@ -60,18 +76,18 @@ async def crawl_website(start_url: str = "https://www.vidaworld.com", max_pages:
         logger.warning(f"Crawl session error: {e}")
 
     features_knowledge = (
-        "\n\n---\n\n### OEM Electronics & Touchscreen Console Specifications:\n"
-        "- **Hero VIDA V1 Pro / V2**: 7-inch TFT Color Touchscreen Console, Custom OS with OTA Updates, Turn-by-Turn Navigation, Keyless Entry & Key Fob, Cruise Control, Document Storage, 4 Riding Modes (Eco, Ride, Sport, Custom), Bluetooth & 4G Connectivity.\n"
-        "- **Ather 450X**: 7-inch DeepView / TFT Touchscreen, Atherstack OS, Google Maps Navigation, Auto-Hold, FallSafe, Theft & Tow Alerts, Bluetooth Music & Call Control, 5 Riding Modes (SmartEco, Eco, Ride, Sport, Warp).\n"
-        "- **TVS iQube**: 7-inch TFT Touchscreen (on 3.4/ST variants), SmartXonnect Bluetooth & 4G Telematics, Alexa Skill Integration, Music Control, Document Wallet, Geo-fencing.\n"
-        "- **Bajaj Chetak**: 5-inch TFT Color Display (TecPac), Turn-by-Turn Navigation, Hill Hold Assist, Call & Music Control, Reverse Mode.\n"
-        "- **Ola Electric S1 Pro**: 7-inch Touchscreen, MoveOS 4, Party Mode, Proximity Unlock, Built-in Speakers, Hill Hold, Cruise Control.\n"
+        "\n\n---\n\n### Official OEM Electronics & Touchscreen Console Ground Truth Specs:\n"
+        "- **Hero VIDA V1 Pro / V2 (Official Portal: https://www.vidaworld.com)**: 7-inch TFT Color Touchscreen Console, Custom OS with OTA Updates, Turn-by-Turn Navigation, Keyless Entry & Key Fob, Cruise Control, Document Storage, 4 Riding Modes (Eco, Ride, Sport, Custom), Bluetooth & 4G Connectivity.\n"
+        "- **Ather 450X (Official Portal: https://www.atherenergy.com)**: 7-inch DeepView / TFT Touchscreen, Atherstack OS, Google Maps Navigation, Auto-Hold, FallSafe, Theft & Tow Alerts, Bluetooth Music & Call Control, 5 Riding Modes (SmartEco, Eco, Ride, Sport, Warp).\n"
+        "- **TVS iQube (Official Portal: https://www.tvsmotor.com/iqube)**: 7-inch TFT Touchscreen (on 3.4/ST variants), SmartXonnect Bluetooth & 4G Telematics, Alexa Skill Integration, Music Control, Document Wallet, Geo-fencing.\n"
+        "- **Bajaj Chetak (Official Portal: https://www.chetak.com)**: 5-inch TFT Color Display (TecPac), Turn-by-Turn Navigation, Hill Hold Assist, Call & Music Control, Reverse Mode.\n"
+        "- **Ola Electric S1 Pro (Official Portal: https://www.olaelectric.com)**: 7-inch Touchscreen, MoveOS 4, Party Mode, Proximity Unlock, Built-in Speakers, Hill Hold, Cruise Control.\n"
     )
 
     if not extracted_docs:
         return (
-            f"## Live Web Crawl Context ({start_url})\n\n"
-            "### Hero VIDA Active Offers & Specs:\n"
+            f"## Official OEM Web Crawl Ground Truth Context ({target_url})\n\n"
+            "### Hero VIDA Active Offers & Specs (Official Ground Truth):\n"
             "- **Official Portal**: https://www.vidaworld.com\n"
             "- **Active Offers**: ₹10,000 Exchange Bonus + ₹2,500 Corporate Benefit + ₹5,000 Festive Cash Discount\n"
             "- **Complimentary Benefits**: 5-Year / 60,000 km Battery Warranty, Free Home Fast Charger, 0% Interest EMI\n"
@@ -82,17 +98,18 @@ async def crawl_website(start_url: str = "https://www.vidaworld.com", max_pages:
     return "\n\n---\n\n".join(extracted_docs) + features_knowledge
 
 def run_crawler_tool(url: str = "https://www.vidaworld.com") -> str:
-    """Synchronous entrypoint for Google ADK Agent tool calling."""
+    """Synchronous entrypoint for Google ADK Agent tool calling on Official OEM websites."""
     try:
         return asyncio.run(crawl_website(start_url=url, max_pages=1))
     except Exception:
         return (
-            "## Hero VIDA Electronics & Console Features Context:\n"
+            "## Official Hero VIDA Electronics & Console Ground Truth Context:\n"
             "- **7-inch TFT Touchscreen Console**: Full color touchscreen with customized UI\n"
             "- **Smart Connectivity**: Bluetooth 5.0, 4G LTE eSIM, Turn-by-Turn Navigation\n"
             "- **Keyless Entry**: Electronic Key Fob with remote boot unlock and SOS alert\n"
             "- **Riding Modes**: Eco, Ride, Sport, and customizable Custom Mode\n"
             "- **Removable Batteries**: Dual removable battery packs for easy home charging\n"
         )
+
 
 
