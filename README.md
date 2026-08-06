@@ -4,11 +4,13 @@ A clean, high-code multi-agent system built entirely with **Google ADK (`google.
 
 ---
 
-## 1. Zero-Code Dynamic Benchmarking
+## 1. Real-Time Crawl-Driven Architecture & Zero Hardcoding
 
-* **Dynamic Competitor Variable**: Ask about any brand (e.g. `Ather`, `Chetak`, `TVS iQube`, `Ola`, `River Indie`, `Simple One`, etc.).
-* **Dynamic City Variable**: Ask about any Indian city (e.g. `Bengaluru`, `Delhi`, `Pune`, `Mumbai`, `Ahmedabad`, `Jaipur`, etc.).
-* **Baseline**: The agent **ALWAYS benchmarks competitors against Hero MotoCorp's VIDA** in that city.
+* **Zero Hardcoded Model Prices:** No static model price arrays in Python code. All vehicle prices, battery kWh specs, IDC ranges, and active promotional offers are fetched via **live real-time web crawling**.
+* **DOM Script & Embedded JSON Extraction (`__NEXT_DATA__`):** Modern Single-Page Applications (Next.js/React/Vue) embed their full data dictionary—including all vehicle models, city dropdown price matrices, and tab options—inside DOM `<script id="__NEXT_DATA__" type="application/json">` tags. The crawler inspects these DOM script tags to extract 100% of structured model & city pricing data in a single fetch.
+* **In-Memory Web Cache (`OEM_WEB_CACHE`):** Crawled web pages and extracted JSON datasets are cached in memory with a 1-hour TTL. Recurring queries for the same site or models serve instantly from memory with **0ms latency**.
+* **Dynamic Official OEM Domain Discovery:** Automatically discovers official competitor websites (`https://www.[brand].com`), filtering out 3rd party aggregators (BikeWale, Zigwheels, etc.).
+* **Multi-City & All-Models Benchmarking:** Supports queries across multiple cities simultaneously (e.g., *"Compare all Hero VIDA models in Bengaluru and Pune"*).
 
 ---
 
@@ -19,12 +21,12 @@ Hero_competitor_analysis_agent/
 ├── agent/                         # Main Agent and Sub-Agents
 │   ├── agent.py                   # 🌟 MAIN ORCHESTRATOR AGENT (root_agent)
 │   ├── sub_agents/                # 🤖 3 SPECIALIZED SUB-AGENTS
-│   │   ├── crawler_agent.py       # Sub-Agent 1: Crawls official portal (vidaworld.com)
-│   │   ├── pricing_agent.py       # Sub-Agent 2: Calculates city EV prices & subsidies
-│   │   └── report_agent.py        # Sub-Agent 3: Formats comparison tables & value scores
+│   │   ├── crawler_agent.py       # Sub-Agent 1: Real-Time Web Crawling (vidaworld.com)
+│   │   ├── pricing_agent.py       # Sub-Agent 2: Multi-City Tax & Subsidy Calculator
+│   │   └── report_agent.py        # Sub-Agent 3: Formats Standardized Vertical Tables
 │   └── tools/                     # 🛠️ PYTHON TOOLS
-│       ├── web_crawler.py         # Python crawler script (converts HTML to clean Markdown)
-│       └── price_engine.py        # Dynamic EV price & subsidy calculation engine
+│       ├── web_crawler.py         # Real-time web crawler with DOM Script JSON Extraction & OEM_WEB_CACHE
+│       └── price_engine.py        # Dynamic EV tax, PM E-Drive subsidy & RTO calculation engine
 ├── main.py                        # Interactive runner (Natural Chat & Variable Inputs)
 ├── deploy.sh                      # 🚀 1-Click Deploy to Gemini Enterprise / Agent Studio
 ├── run.sh                         # 1-Click Local Launch script
@@ -53,7 +55,7 @@ cd /Users/zuhaibp/Documents/Argolis/Hero_competitor_analysis_agent
   --project="<YOUR_ARGOLIS_PROJECT_ID>" \
   --region="us-central1" \
   --display_name="Hero VIDA Competitor Intelligence Agent" \
-  --description="Autonomous competitive pricing and 15-city benchmark agent for Hero MotoCorp VIDA" \
+  --description="Autonomous real-time web-crawling competitive pricing, subsidy engine, and active offer benchmark agent for Hero MotoCorp VIDA" \
   agent
 ```
 
@@ -68,9 +70,9 @@ Once deployed:
 2. **Gemini Enterprise (GE) Chat**:
    * In Gemini Enterprise under **Agents / Extensions**, toggle **Hero VIDA Competitor Intelligence Agent** to **Enabled**.
    * Users in your organization can now open Gemini Enterprise chat and ask:
+     > *"Compare all Hero VIDA models pricing across Bengaluru and Pune"*  
      > *"Compare Ather in Bengaluru with VIDA"*  
-     > *"How does Bajaj Chetak compare with Hero VIDA in Pune?"*  
-     > *"Show me 15-city competitive pricing for Hero VIDA"*
+     > *"Show me state subsidies for Hero VIDA in Delhi and Mumbai"*
 
 ---
 
@@ -102,29 +104,29 @@ flowchart TD
         CrawlerAgent["crawler_subagent\n(Web Scraper | Gemini 2.5 Flash)"]:::subagent
         ReportAgent["report_subagent\n(Formatter | Gemini 2.5 Flash)"]:::subagent
         
-        PriceTool[["compare_competitor_with_vida\n(Python logic)"]]:::tools
-        CrawlTool[["crawl_website\n(Async HTTP & Markdownify)"]]:::tools
+        PriceTool[["compare_competitor_with_vida\n(Multi-City Tax & Subsidy Math)"]]:::tools
+        CrawlTool[["crawl_website\n(DOM Script JSON Extractor & OEM_WEB_CACHE)"]]:::tools
     end
     
-    ExternalWeb[("vidaworld.com\nLive Web Data")]:::api
+    ExternalWeb[("vidaworld.com\nLive Web & JSON Data")]:::api
 
     User -- "1. Sends Prompt" --> MainAgent
     MainAgent -- "If ambiguous" --> User
     
-    MainAgent -- "2. Delegates Pricing" --> PricingAgent
-    PricingAgent -- "Calls tool" --> PriceTool
-    PriceTool -- "Returns City/Tax Data" --> PricingAgent
-    PricingAgent -- "Returns JSON" --> MainAgent
-    
     MainAgent -- "2. Delegates Crawling" --> CrawlerAgent
     CrawlerAgent -- "Calls tool" --> CrawlTool
-    CrawlTool -- "Fetches HTML" --> ExternalWeb
-    ExternalWeb -- "Returns Markdown" --> CrawlTool
-    CrawlTool -- "Returns Specs" --> CrawlerAgent
-    CrawlerAgent -- "Returns Analysis" --> MainAgent
+    CrawlTool -- "Fetches HTML/DOM JSON" --> ExternalWeb
+    ExternalWeb -- "Returns Live JSON & Markdown" --> CrawlTool
+    CrawlTool -- "Stores in OEM_WEB_CACHE" --> CrawlerAgent
     
-    MainAgent -- "3. Delegates Formatting" --> ReportAgent
+    MainAgent -- "3. Delegates Pricing" --> PricingAgent
+    PricingAgent -- "Calls tool" --> PriceTool
+    PriceTool -- "Calculates PM E-Drive & RTO" --> PricingAgent
+    PricingAgent -- "Returns JSON" --> MainAgent
+    
+    MainAgent -- "4. Delegates Formatting" --> ReportAgent
     ReportAgent -- "Returns Markdown/CSV/Mermaid" --> MainAgent
     
-    MainAgent -- "4. Streams Final Output" --> User
+    MainAgent -- "5. Streams Final Output" --> User
 ```
+
