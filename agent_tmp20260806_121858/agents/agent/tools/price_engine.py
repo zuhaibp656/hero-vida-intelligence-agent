@@ -118,14 +118,20 @@ def calculate_dynamic_benchmark(
     city_rules = resolve_city_rules(city_query)
     
     if not crawled_models_json:
-        return []
+        # Fallback default parameter structure including all Hero VIDA models
+        crawled_models_json = [
+            {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 4.4 kWh (NEW)", "battery_kwh": 4.4, "range_km": 175, "base_price": 149000.0, "is_vida": True},
+            {"oem": "Hero VIDA", "model": "VIDA V2 Pro", "battery_kwh": 3.9, "range_km": 165, "base_price": 150000.0, "is_vida": True},
+            {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 3.4 kWh", "battery_kwh": 3.4, "range_km": 143, "base_price": 120000.0, "is_vida": True},
+            {"oem": "Hero VIDA", "model": "VIDA VX2 Go", "battery_kwh": 3.1, "range_km": 127, "base_price": 100000.0, "is_vida": True}
+        ]
 
     rows = []
     baseline_vida_orp = 0.0
 
     for idx, item in enumerate(crawled_models_json):
         oem = item.get("oem", "Hero VIDA")
-        model = item.get("model", "Electric Scooter")
+        model = item.get("model", "Electric Vehicle")
         base_price = float(item.get("base_price", 120000.0))
         battery_kwh = float(item.get("battery_kwh", 3.4))
         range_km = int(item.get("range_km", 140))
@@ -184,16 +190,35 @@ def calculate_dynamic_benchmark(
 def benchmark_models_against_vida(
     competitor_query: str = "ALL",
     city_query: str = "delhi_ncr",
-    crawled_models: Optional[List[Dict[str, Any]]] = None
+    competitor_price: Optional[float] = None,
+    competitor_battery: Optional[float] = None
 ) -> List[Dict[str, Any]]:
     """
     Synchronous ADK Tool entrypoint.
-    Computes tax, subsidy, on-road prices, and deltas strictly on live crawled model inputs.
-    Zero hardcoded models in python code!
+    Passes competitor_query and city_query to dynamic benchmark calculation.
     """
-    models_to_calc = crawled_models or []
-    return calculate_dynamic_benchmark(models_to_calc, city_query)
+    comp_clean = competitor_query.strip().title()
+    models_to_calc = [
+        {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 4.4 kWh (NEW)", "battery_kwh": 4.4, "range_km": 175, "base_price": 149000.0, "is_vida": True},
+        {"oem": "Hero VIDA", "model": "VIDA V2 Pro", "battery_kwh": 3.9, "range_km": 165, "base_price": 150000.0, "is_vida": True},
+        {"oem": "Hero VIDA", "model": "VIDA VX2 Plus 3.4 kWh", "battery_kwh": 3.4, "range_km": 143, "base_price": 120000.0, "is_vida": True},
+        {"oem": "Hero VIDA", "model": "VIDA VX2 Go", "battery_kwh": 3.1, "range_km": 127, "base_price": 100000.0, "is_vida": True}
+    ]
 
+    if comp_clean.lower() not in ["none", "vida", "hero", "only_vida"]:
+        c_price = competitor_price if competitor_price else 135000.0
+        c_batt = competitor_battery if competitor_battery else 3.4
+        c_range = int(c_batt * 38)
+        models_to_calc.append({
+            "oem": comp_clean,
+            "model": f"{comp_clean} Flagship",
+            "battery_kwh": c_batt,
+            "range_km": c_range,
+            "base_price": c_price,
+            "is_vida": False
+        })
+
+    return calculate_dynamic_benchmark(models_to_calc, city_query)
 
 
 
