@@ -13,7 +13,7 @@ def compare_competitor_with_vida(competitor_name: str = "ALL", city_name: str = 
     """
     Benchmarks any competitor (e.g. 'Ather', 'Bajaj Chetak', 'TVS iQube', 'Ola', 'River Indie', or 'ALL') 
     against Hero MotoCorp's VIDA in any Indian city (e.g. 'Bengaluru', 'Delhi', 'Mumbai', 'Pune', 'Ahmedabad').
-    Returns side-by-side pricing, state subsidies, and price deltas vs Hero VIDA.
+    Returns side-by-side pricing, state subsidies, active promotional offers, exchange bonuses, and price deltas vs Hero VIDA.
     """
     records = benchmark_models_against_vida(competitor_query=competitor_name, city_query=city_name)
     
@@ -28,8 +28,17 @@ def compare_competitor_with_vida(competitor_name: str = "ALL", city_name: str = 
             "segment": r["segment"],
             "battery_kwh": f"{r['battery_kwh']} kWh",
             "range_km": f"{r['range_km']} km",
-            "net_ex_showroom": format_inr(r["net_ex_showroom"]),
-            "effective_on_road_price": format_inr(r["on_road_price"]),
+            "base_ex_showroom": r["base_ex_showroom"],
+            "pm_edrive_subsidy": r["pm_subsidy"],
+            "state_ev_subsidy": r["state_subsidy"],
+            "net_ex_showroom": r["net_ex_showroom"],
+            "rto_cost": r["rto_cost"],
+            "insurance_cost": r["insurance_cost"],
+            "effective_on_road_price": r["effective_on_road_price"],
+            "promotional_on_road_price": r["promotional_on_road_price"],
+            "active_promotional_offers": r["active_offers"],
+            "complimentary_perks": r["complimentary_perks"],
+            "max_potential_savings": r["max_potential_savings"],
             "price_delta_vs_vida": delta_str,
             "percentage_delta": pct_str,
             "value_score": r["value_score"],
@@ -43,8 +52,8 @@ pricing_agent = Agent(
     description="Dynamic price benchmarking agent that compares any competitor against Hero VIDA in any Indian city.",
     instruction="""
     You are the Price Benchmarking Sub-Agent.
-    When asked to compare any competitor in any city, call `compare_competitor_with_vida(competitor_name, city_name)`.
-    You calculate exact state subsidies, on-road prices, and price deltas against Hero VIDA.
+    When asked to compare any competitor in any city or ask about subsidies/offers, call `compare_competitor_with_vida(competitor_name, city_name)`.
+    You calculate exact state subsidies (PM E-Drive + State policy), RTO exemptions, on-road prices, active brand promotional offers (cash discounts, exchange bonuses, corporate offers), and price deltas against Hero VIDA.
     """,
     tools=[compare_competitor_with_vida]
 )

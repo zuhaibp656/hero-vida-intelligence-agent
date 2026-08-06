@@ -107,7 +107,62 @@ KNOWN_COMPETITORS_CATALOG = {
 }
 
 # ==============================================================================
-# 4. DYNAMIC PRICE & SUBSIDY CALCULATION ENGINE
+# 4. OEM ACTIVE PROMOTIONAL OFFERS & BENEFITS CATALOG
+# ==============================================================================
+KNOWN_OEM_OFFERS = {
+    "Hero VIDA": {
+        "cash_discount": 5000,
+        "exchange_bonus": 10000,
+        "corporate_bonus": 2500,
+        "active_offers_summary": "₹10,000 Exchange Bonus + ₹2,500 Corporate Discount + ₹5,000 Festive Cash Discount",
+        "complimentary_perks": "Complimentary 5-Year / 60,000 km Battery Warranty, Free Home Fast Charger Installation, 0% Interest EMI options"
+    },
+    "Ather Energy": {
+        "cash_discount": 5000,
+        "exchange_bonus": 3000,
+        "corporate_bonus": 1500,
+        "active_offers_summary": "₹5,000 Instant Cash Discount + ₹3,000 Exchange Bonus",
+        "complimentary_perks": "1-Year Free Ather Grid Charging Subscription, Extended Battery Pro Pack option"
+    },
+    "TVS iQube": {
+        "cash_discount": 4000,
+        "exchange_bonus": 3000,
+        "corporate_bonus": 2000,
+        "active_offers_summary": "₹4,000 Festive Cashback + ₹3,000 Exchange Offer",
+        "complimentary_perks": "5-Year Extended Warranty Package, Credit Card Instant Cashback up to ₹5,000"
+    },
+    "Bajaj Chetak": {
+        "cash_discount": 3000,
+        "exchange_bonus": 3000,
+        "corporate_bonus": 2000,
+        "active_offers_summary": "₹3,000 Special Festival Discount + ₹2,000 Corporate Benefit",
+        "complimentary_perks": "Low 6.99% Interest Rate Finance Options, Free TecPac Software Suite Trial"
+    },
+    "Ola Electric": {
+        "cash_discount": 10000,
+        "exchange_bonus": 5000,
+        "corporate_bonus": 2500,
+        "active_offers_summary": "₹10,000 S1 Fest Cash Discount + ₹5,000 Exchange Bonus",
+        "complimentary_perks": "Free 8-Year / 80,000 km Extended Battery Warranty included"
+    },
+    "Simple Energy": {
+        "cash_discount": 2500,
+        "exchange_bonus": 2500,
+        "corporate_bonus": 1000,
+        "active_offers_summary": "₹2,500 Introductory Cash Benefit",
+        "complimentary_perks": "Standard 3-Year Battery Warranty, Complimentary Portable Charger"
+    },
+    "River Indie": {
+        "cash_discount": 3000,
+        "exchange_bonus": 2000,
+        "corporate_bonus": 1500,
+        "active_offers_summary": "₹3,000 Launch Discount + Utility Accessory Kit Bundle",
+        "complimentary_perks": "Free Utility Pannier Mounts, 3-Year Vehicle Warranty"
+    }
+}
+
+# ==============================================================================
+# 5. DYNAMIC PRICE & SUBSIDY CALCULATION ENGINE
 # ==============================================================================
 def resolve_city_rules(city_query: str) -> Dict[str, Any]:
     cleaned = city_query.strip().lower().replace("-", "_").replace(" ", "_")
@@ -117,7 +172,7 @@ def resolve_city_rules(city_query: str) -> Dict[str, Any]:
     # Default to standard Delhi-NCR policy if unknown city
     return CITY_TAX_RULES["delhi_ncr"]
 
-def calculate_on_road_price(base_price: float, battery_kwh: float, city_rules: Dict[str, Any]) -> Dict[str, float]:
+def calculate_on_road_price(base_price: float, battery_kwh: float, city_rules: Dict[str, Any], oem_name: str = "Hero VIDA") -> Dict[str, Any]:
     # Central PM E-DRIVE Subsidy (₹2,500/kWh up to ₹10,000)
     pm_subsidy = min(battery_kwh * 2500, 10000)
     
@@ -129,6 +184,18 @@ def calculate_on_road_price(base_price: float, battery_kwh: float, city_rules: D
     insurance = city_rules["insurance"]
     orp = net_ex + rto + insurance
     
+    # Resolve active OEM offers
+    offers_data = KNOWN_OEM_OFFERS.get(oem_name, {
+        "cash_discount": 3000,
+        "exchange_bonus": 2500,
+        "corporate_bonus": 1500,
+        "active_offers_summary": "₹3,000 Cash Discount + ₹2,500 Exchange Bonus",
+        "complimentary_perks": "3-Year Battery Warranty, Complimentary Portable Charger"
+    })
+
+    total_max_discount = offers_data["cash_discount"] + offers_data["exchange_bonus"] + offers_data["corporate_bonus"]
+    effective_promotional_orp = max(orp - offers_data["cash_discount"], 0)
+    
     return {
         "base_price": base_price,
         "pm_subsidy": pm_subsidy,
@@ -136,7 +203,11 @@ def calculate_on_road_price(base_price: float, battery_kwh: float, city_rules: D
         "net_ex_showroom": net_ex,
         "rto": rto,
         "insurance": insurance,
-        "effective_orp": orp
+        "effective_orp": orp,
+        "promotional_on_road_price": effective_promotional_orp,
+        "active_offers": offers_data["active_offers_summary"],
+        "complimentary_perks": offers_data["complimentary_perks"],
+        "max_potential_savings": total_max_discount
     }
 
 def format_inr(val: float) -> str:
@@ -168,24 +239,35 @@ def benchmark_models_against_vida(
     
     # 1. Compute Hero VIDA models for this city
     vida_rows = []
-    for vm in HERO_VIDA_MODELS:
-        cost = calculate_on_road_price(vm["base_price"], vm["battery_kwh"], city_rules)
+    raw_baseline_vida_orp = 0.0
+    for idx, vm in enumerate(HERO_VIDA_MODELS):
+        cost = calculate_on_road_price(vm["base_price"], vm["battery_kwh"], city_rules, vm["oem"])
+        if idx == 0:
+            raw_baseline_vida_orp = cost["effective_orp"]
+            
         vida_rows.append({
             "oem": vm["oem"],
             "model": f"{vm['model']} [HERO VIDA BASELINE]",
             "segment": vm["segment"],
             "battery_kwh": vm["battery_kwh"],
             "range_km": vm["range_km"],
-            "net_ex_showroom": cost["net_ex_showroom"],
-            "on_road_price": cost["effective_orp"],
+            "base_ex_showroom": format_inr(cost["base_price"]),
+            "pm_subsidy": format_inr(cost["pm_subsidy"]),
+            "state_subsidy": format_inr(cost["state_subsidy"]),
+            "net_ex_showroom": format_inr(cost["net_ex_showroom"]),
+            "rto_cost": format_inr(cost["rto"]),
+            "insurance_cost": format_inr(cost["insurance"]),
+            "effective_on_road_price": format_inr(cost["effective_orp"]),
+            "promotional_on_road_price": format_inr(cost["promotional_on_road_price"]),
+            "active_offers": cost["active_offers"],
+            "complimentary_perks": cost["complimentary_perks"],
+            "max_potential_savings": format_inr(cost["max_potential_savings"]),
             "delta_vs_vida": 0.0,
             "pct_delta": 0.0,
             "value_score": round(vm["range_km"] / (cost["effective_orp"] / 100000.0), 2),
             "is_vida_baseline": True,
             "city_name": city_rules["name"]
         })
-
-    baseline_vida_orp = vida_rows[0]["on_road_price"] # VIDA VX2 Plus baseline
 
     # 2. Resolve Competitor Models
     comp_models = []
@@ -217,9 +299,9 @@ def benchmark_models_against_vida(
     # 3. Calculate Competitor Prices & Deltas vs VIDA
     comp_rows = []
     for cm in comp_models:
-        cost = calculate_on_road_price(cm["base_price"], cm["battery_kwh"], city_rules)
-        delta = cost["effective_orp"] - baseline_vida_orp
-        pct_delta = round((delta / baseline_vida_orp) * 100.0, 2)
+        cost = calculate_on_road_price(cm["base_price"], cm["battery_kwh"], city_rules, cm["oem"])
+        delta = cost["effective_orp"] - raw_baseline_vida_orp
+        pct_delta = round((delta / cost["effective_orp"]) * 100.0, 2) if cost["effective_orp"] > 0 else 0.0
         val_score = round(cm["range_km"] / (cost["effective_orp"] / 100000.0), 2)
         
         comp_rows.append({
@@ -228,8 +310,17 @@ def benchmark_models_against_vida(
             "segment": cm["segment"],
             "battery_kwh": cm["battery_kwh"],
             "range_km": cm["range_km"],
-            "net_ex_showroom": cost["net_ex_showroom"],
-            "on_road_price": cost["effective_orp"],
+            "base_ex_showroom": format_inr(cost["base_price"]),
+            "pm_subsidy": format_inr(cost["pm_subsidy"]),
+            "state_subsidy": format_inr(cost["state_subsidy"]),
+            "net_ex_showroom": format_inr(cost["net_ex_showroom"]),
+            "rto_cost": format_inr(cost["rto"]),
+            "insurance_cost": format_inr(cost["insurance"]),
+            "effective_on_road_price": format_inr(cost["effective_orp"]),
+            "promotional_on_road_price": format_inr(cost["promotional_on_road_price"]),
+            "active_offers": cost["active_offers"],
+            "complimentary_perks": cost["complimentary_perks"],
+            "max_potential_savings": format_inr(cost["max_potential_savings"]),
             "delta_vs_vida": delta,
             "pct_delta": pct_delta,
             "value_score": val_score,
@@ -239,3 +330,4 @@ def benchmark_models_against_vida(
 
     # Combine VIDA baseline at the top followed by competitors
     return vida_rows + comp_rows
+
