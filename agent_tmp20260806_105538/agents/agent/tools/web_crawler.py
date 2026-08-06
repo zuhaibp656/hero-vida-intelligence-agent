@@ -1,20 +1,3 @@
-import asyncio
-import aiohttp
-from bs4 import BeautifulSoup
-from markdownify import markdownify as md
-from urllib.parse import urlparse, urljoin
-import os
-import re
-import logging
-from typing import Dict, List, Optional
-
-logger = logging.getLogger(__name__)
-
-THIRD_PARTY_DOMAINS = [
-    "bikewale", "zigwheels", "carandbike", "google", "bing", "wikipedia",
-    "bikedekho", "99wheels", "youtube", "facebook", "twitter", "instagram", "reddit"
-]
-
 OFFICIAL_OEM_DOMAINS = {
     "hero": "https://www.vidaworld.com",
     "vida": "https://www.vidaworld.com",
@@ -25,42 +8,21 @@ OFFICIAL_OEM_DOMAINS = {
     "chetak": "https://www.chetak.com",
     "ola": "https://www.olaelectric.com",
     "simple": "https://simpleenergy.in",
-    "river": "https://www.rideriver.com",
-    "matter": "https://matter.in",
-    "ultraviolette": "https://www.ultraviolette.com",
-    "bgauss": "https://www.bgauss.com",
-    "ampere": "https://ampere.greaveselectricmobility.com"
+    "river": "https://www.rideriver.com"
 }
 
 def resolve_official_oem_url(query_or_url: str) -> str:
     cleaned = query_or_url.strip().lower()
-
-    # 1. If input is already an explicit http/https URL
-    if cleaned.startswith("http://") or cleaned.startswith("https://"):
-        domain = urlparse(cleaned).netloc
-        # Filter out third-party aggregators
-        if any(tp in domain for tp in THIRD_PARTY_DOMAINS):
-            logger.warning(f"Third-party aggregator site detected ({cleaned}). Redirecting to official OEM domain discovery.")
-            cleaned = urlparse(cleaned).path.replace("/", " ") + " " + domain
-        else:
-            return cleaned
-
-    # 2. Match against catalog of known official brand portals
     for key, official_domain in OFFICIAL_OEM_DOMAINS.items():
         if key in cleaned:
             return official_domain
-
-    # 3. DYNAMIC AUTONOMOUS DISCOVERY for ANY new competitor or product:
-    # Extracts the primary brand name and constructs the official domain endpoint dynamically
-    words = [w for w in cleaned.split() if w not in ["scooter", "electric", "ev", "vs", "compare", "price", "specs", "in", "the"]]
-    brand_word = words[0] if words else cleaned
-    brand_slug = re.sub(r'[^a-z0-9]', '', brand_word)
-    
-    if brand_slug:
-        dynamic_url = f"https://www.{brand_slug}.com"
-        logger.info(f"Dynamically discovered official OEM website: {dynamic_url}")
-        return dynamic_url
-
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        domain = urlparse(cleaned).netloc
+        # Ensure it's not a third party site
+        if any(third_party in domain for third_party in ["bikewale", "zigwheels", "carandbike", "google", "bing", "wikipedia"]):
+            logger.warning(f"Rejected third party URL {cleaned}. Redirecting to official Hero VIDA portal.")
+            return "https://www.vidaworld.com"
+        return cleaned
     return "https://www.vidaworld.com"
 
 async def fetch_page(session: aiohttp.ClientSession, url: str) -> Optional[str]:
