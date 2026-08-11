@@ -60,10 +60,32 @@ def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
             item_name = item.get("name", "")
             variants = item.get("variants", [])
             v0 = variants[0] if variants else {}
+            
+            # Extract battery capacity (e.g. 4.4 kWh, 3.9 kWh, 3.4 kWh, 2.2 kWh)
+            kwh_match = re.search(r"(\d+\.?\d*)\s*kwh", item_name, re.IGNORECASE)
+            if kwh_match:
+                battery_str = f"{kwh_match.group(1)} kWh"
+            elif "2.2" in item_name:
+                battery_str = "2.2 kWh"
+            elif "3.1" in item_name:
+                battery_str = "3.1 kWh"
+            elif "3.4" in item_name:
+                battery_str = "3.4 kWh"
+            elif "4.4" in item_name:
+                battery_str = "4.4 kWh"
+            elif "V2 PRO" in item_name.upper() or "V1 PRO" in item_name.upper():
+                battery_str = "3.9 kWh"
+            else:
+                battery_str = v0.get("seatingType", "3.4 kWh")
+
+            rng_val = v0.get("certified_range", v0.get("range", "143 km"))
+            if rng_val and not str(rng_val).lower().endswith("km"):
+                rng_val = f"{rng_val} km"
+
             product_specs[item_name] = {
                 "name": item_name,
-                "battery": v0.get("seatingType", "3.4 kWh"),
-                "range": v0.get("certified_range", v0.get("range", "143 km")),
+                "battery": battery_str,
+                "range": rng_val,
                 "top_speed": v0.get("top_speed", "80 kmph"),
                 "riding_modes": v0.get("ridingModes", "Eco, Ride, Sport"),
                 "fast_charging": v0.get("fastChargingTime", "60 min")
@@ -89,11 +111,14 @@ def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
             ex_showroom = p.get("exShowRoomPrice") or p.get("effectivePrice") or "0"
             effective_price = p.get("effectivePrice") or ex_showroom
             
+            ex_str = f"₹{int(float(ex_showroom)):,}" if ex_showroom.replace(".", "", 1).isdigit() else f"₹{ex_showroom}"
+            eff_str = f"₹{int(float(effective_price)):,}" if effective_price.replace(".", "", 1).isdigit() else f"₹{effective_price}"
+
             rows.append({
                 "model": item_name,
                 "city_state": p.get("city_state_id", ""),
-                "ex_showroom_price": f"₹{int(float(ex_showroom)):,}" if ex_showroom.isdigit() else f"₹{ex_showroom}",
-                "effective_price": f"₹{int(float(effective_price)):,}" if effective_price.isdigit() else f"₹{effective_price}",
+                "ex_showroom_price": ex_str,
+                "effective_price": eff_str,
                 "battery_kwh": specs.get("battery", "3.4 kWh"),
                 "certified_range": specs.get("range", "143 km"),
                 "top_speed": specs.get("top_speed", "80 kmph"),
@@ -108,7 +133,7 @@ def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
     ]
     for r in rows:
         output_lines.append(
-            f"- **{r['model']}**: Ex-Showroom: {r['ex_showroom_price']} | Effective Price: {r['effective_price']} | Battery: {r['battery_kwh']} | Range: {r['certified_range']} | Top Speed: {r['top_speed']} | Modes: {r['riding_modes']}"
+            f"- **{r['model']}**: Ex-Showroom: {r['ex_showroom_price']} | Final Customer Effective Price: {r['effective_price']} | Battery: {r['battery_kwh']} | Certified Range: {r['certified_range']} | Top Speed: {r['top_speed']} | Riding Modes: {r['riding_modes']}"
         )
 
     output_lines.append("\n### Active Brand Promotional Offers (Live vidaworld.com):")
