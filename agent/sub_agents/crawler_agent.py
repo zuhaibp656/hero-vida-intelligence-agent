@@ -20,11 +20,16 @@ crawler_agent = Agent(
     - For Competitors: Crawl the official website of whichever competitor is mentioned in the chat by the user (e.g. Ather, TVS, Chetak, Ola).
     NEVER crawl third-party blogs, BikeWale, ZigWheels, or aggregators.
     
-    Call `run_crawler_tool(target_query_or_url, city_name)` passing the brand name/URL and the user's target city (e.g. 'pune', 'bengaluru', 'delhi').
-    Return the live scraped model names, ex-showroom and effective prices, battery kWh, certified range, top speed, riding modes, and active promotional offers to the main orchestrator agent.
+    Call `run_crawler_tool(target_query_or_url, city_name, model_filter)` passing:
+    - `target_query_or_url`: "https://www.vidaworld.com" (or competitor URL)
+    - `city_name`: The city or cities requested (e.g. "Bengaluru and Pune and Chandigarh")
+    - `model_filter`: Specific model keyword if specified by the user (e.g. "v2pro", "vx2", or "" for all models)
+
+    Return the complete Markdown Table dataset directly to the main orchestrator agent.
     """,
     tools=[run_crawler_tool]
 )
+
 
 
 

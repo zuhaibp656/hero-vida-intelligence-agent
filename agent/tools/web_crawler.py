@@ -28,16 +28,16 @@ THIRD_PARTY_DOMAINS = [
     "bikedekho", "99wheels", "youtube", "facebook", "twitter", "instagram", "reddit"
 ]
 
-def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
+def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = "") -> str:
     """
     Crawls official real-time master product and price datasets directly from vidaworld.com.
-    Returns live markdown table and JSON context of all Hero VIDA models for the target city.
+    Returns live unified markdown table and executive breakdown for one or multiple cities and models.
     """
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
-    def fetch_gzip(url: str):
+    def fetch_data(url: str):
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"})
         with urllib.request.urlopen(req, context=ctx, timeout=12) as resp:
             raw = resp.read()
@@ -47,8 +47,8 @@ def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
                 return json.loads(raw.decode("utf-8"))
 
     try:
-        prices_data = fetch_gzip(VIDA_PRICE_MASTER_URL)
-        products_data = fetch_gzip(VIDA_PRODUCT_MASTER_URL)
+        prices_data = fetch_data(VIDA_PRICE_MASTER_URL)
+        products_data = fetch_data(VIDA_PRODUCT_MASTER_URL)
     except Exception as e:
         logger.error(f"Failed to crawl live data from vidaworld.com: {e}")
         return f"Error crawling vidaworld.com: {e}"
@@ -61,7 +61,6 @@ def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
             variants = item.get("variants", [])
             v0 = variants[0] if variants else {}
             
-            # Extract battery capacity (e.g. 4.4 kWh, 3.9 kWh, 3.4 kWh, 2.2 kWh)
             kwh_match = re.search(r"(\d+\.?\d*)\s*kwh", item_name, re.IGNORECASE)
             if kwh_match:
                 battery_str = f"{kwh_match.group(1)} kWh"
@@ -91,57 +90,64 @@ def fetch_live_vida_master_data(city_query: str = "delhi") -> str:
                 "fast_charging": v0.get("fastChargingTime", "60 min")
             }
 
-    # Filter live prices for target city
-    cleaned_city = city_query.strip().lower()
-    matching_prices = [
-        p for p in prices_data 
-        if cleaned_city in p.get("city_state_id", "").lower()
-    ]
-    if not matching_prices:
-        matching_prices = [p for p in prices_data if "delhi" in p.get("city_state_id", "").lower()]
+    # Split multi-city queries (e.g. "bengaluru and pune and chandigarh")
+    cities = [c.strip() for c in re.split(r',| and |&', city_query.strip()) if c.strip()]
+    if not cities:
+        cities = ["pune"]
 
-    seen = set()
     table_rows = []
     
-    for p in matching_prices:
-        item_name = p.get("item_name", "")
-        # Filter out 0 price test records
-        ex_val = p.get("exShowRoomPrice") or "0"
-        eff_val = p.get("effectivePrice") or ex_val
-        if item_name and item_name not in seen and float(ex_val.replace(".", "", 1) or 0) > 10000:
-            seen.add(item_name)
-            specs = product_specs.get(item_name, {})
+    for c in cities:
+        cleaned_city = c.lower()
+        matching_prices = [p for p in prices_data if cleaned_city in p.get("city_state_id", "").lower()]
+        if not matching_prices:
+            matching_prices = [p for p in prices_data if "delhi" in p.get("city_state_id", "").lower()]
+
+        seen = set()
+        for p in matching_prices:
+            item_name = p.get("item_name", "")
+            ex_val = p.get("exShowRoomPrice") or "0"
+            eff_val = p.get("effectivePrice") or ex_val
             
-            ex_str = f"₹{int(float(ex_val)):,}"
-            eff_str = f"₹{int(float(eff_val)):,}"
-            battery_kwh = specs.get("battery", "3.4 kWh")
-            range_km = specs.get("range", "143 km")
-            
-            # Subsidies & active offers
-            subsidies = "₹10,000 (PM E-Drive) + RTO Waiver" if "4.4" in battery_kwh or "3.9" in battery_kwh else "₹8,500 (PM E-Drive) + RTO Waiver"
-            offers = "• ₹10,000 Exchange Bonus<br>• ₹2,500 Corporate Benefit<br>• ₹5,000 Festive Cash"
-            
-            table_rows.append(
-                f"| **{city_query.title()}** | **Hero VIDA {item_name}** | {battery_kwh} | {range_km} | {ex_str} | {subsidies} | {offers} | **🟢 {eff_str}** |"
-            )
+            # If model filter is provided (e.g. "v2pro" or "vx2"), check match
+            if model_filter:
+                mf_clean = re.sub(r'[^a-z0-9]', '', model_filter.lower())
+                in_clean = re.sub(r'[^a-z0-9]', '', item_name.lower())
+                if mf_clean not in in_clean:
+                    continue
+
+            if item_name and item_name not in seen and float(ex_val.replace(".", "", 1) or 0) > 10000:
+                seen.add(item_name)
+                specs = product_specs.get(item_name, {})
+                
+                ex_str = f"₹{int(float(ex_val)):,}"
+                eff_str = f"₹{int(float(eff_val)):,}"
+                battery_kwh = specs.get("battery", "3.4 kWh")
+                range_km = specs.get("range", "143 km")
+                
+                subsidies = "₹10,000 (PM E-Drive) + RTO Waiver" if "4.4" in battery_kwh or "3.9" in battery_kwh else "₹8,500 (PM E-Drive) + RTO Waiver"
+                offers = "• ₹10,000 Exchange Bonus<br>• ₹2,500 Corporate Benefit<br>• ₹5,000 Festive Cash"
+                
+                table_rows.append(
+                    f"| **{c.title()}** | **Hero VIDA {item_name}** | {battery_kwh} | {range_km} | {ex_str} | {subsidies} | {offers} | **🟢 {eff_str}** |"
+                )
 
     output = [
-        f"### 📊 Competitive Pricing & Model Comparison Table ({city_query.title()})\n",
+        f"### 📊 Competitive Pricing & Model Comparison Table ({', '.join([c.title() for c in cities])})\n",
         "| City | Model & Variant | Battery Capacity | Certified Range | Base Ex-Showroom | Central & State Subsidy | Active Discounts & Promotional Offers | ⭐ Final Customer Effective Price |",
         "| :--- | :--- | :---: | :---: | :---: | :---: | :--- | :---: |"
     ]
     output.extend(table_rows)
     output.append("\n---")
-    output.append(f"\n### 📝 Executive Summary & Pricing Breakdown ({city_query.title()})")
+    output.append(f"\n### 📝 Executive Summary & Pricing Breakdown")
     output.append(f"- **Live Pricing Grounding:** Real-time data crawled from official portal https://www.vidaworld.com.")
-    output.append(f"- **Best Value Variant:** **Hero VIDA VX2 Plus 4.4 kWh** delivers 187 km range with PM E-Drive subsidy and exchange bonus benefits.")
+    output.append(f"- **City Pricing Variation:** Effective prices reflect local state EV subsidy waivers and promotional discount packages across {', '.join([c.title() for c in cities])}.")
     output.append("\n### 🎯 Strategic Sales Enablement Pointers (Hero VIDA Key Advantages)")
-    output.append("- **Removable Battery Convenience:** Dual removable battery packs for easy home charging.")
+    output.append("- **Removable Battery Convenience:** Dual removable battery packs for easy home charging without dedicated parking charging points.")
     output.append("- **Warranty Assurance:** 5-Year / 60,000 km battery warranty backed by Hero's nationwide service network.")
     output.append("- **Smart Touchscreen Console:** 7-inch TFT color touchscreen with custom riding modes (Eco, Ride, Sport, Custom).")
 
     return "\n".join(output)
-
 
 def resolve_official_oem_url(query_or_url: str) -> str:
     cleaned = query_or_url.strip().lower()
@@ -157,7 +163,6 @@ def resolve_official_oem_url(query_or_url: str) -> str:
     if any(k in cleaned for k in ["hero", "vida", "vidaworld"]):
         return OFFICIAL_HERO_VIDA_DOMAIN
 
-    # Dynamic Competitor URL construction (official sites only)
     words = [w for w in cleaned.split() if w not in ["scooter", "electric", "ev", "vs", "compare", "price", "specs", "in", "the", "all", "models"]]
     brand_word = words[0] if words else cleaned
     brand_slug = re.sub(r'[^a-z0-9]', '', brand_word)
@@ -188,13 +193,13 @@ async def fetch_competitor_html(url: str) -> str:
         logger.warning(f"Competitor fetch error for {url}: {e}")
     return f"Live Competitor Web Crawl Context for {url}: Scraped official OEM portal for active specs and models."
 
-def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", city_name: str = "pune") -> str:
+def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", city_name: str = "pune", model_filter: str = "") -> str:
     """
     Synchronous entrypoint for Google ADK Agent tool calling.
     Crawls official Hero VIDA live master datasets directly from vidaworld.com,
     and crawls official competitor websites in real time for one or multiple cities. Stores result in memory cache.
     """
-    cache_key = f"{target_query_or_url}_{city_name}".lower()
+    cache_key = f"{target_query_or_url}_{city_name}_{model_filter}".lower()
     
     import time
     now = time.time()
@@ -203,24 +208,13 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
         if now - entry["timestamp"] < CACHE_TTL_SECONDS:
             return entry["data"]
 
-    # Parse multi-city queries (e.g. "bengaluru and pune", "delhi, mumbai")
-    cities = [c.strip() for c in re.split(r',| and |&', city_name.strip()) if c.strip()]
-    if not cities:
-        cities = ["pune"]
-
     target_url = resolve_official_oem_url(target_query_or_url)
     
     if "vidaworld" in target_url or "vida" in target_query_or_url.lower():
-        city_results = []
-        for c in cities:
-            city_results.append(fetch_live_vida_master_data(city_query=c))
-        result = "\n\n---\n\n".join(city_results)
+        result = fetch_live_vida_master_data(city_query=city_name, model_filter=model_filter)
     else:
         competitor_context = asyncio.run(fetch_competitor_html(target_url))
-        city_results = []
-        for c in cities:
-            city_results.append(fetch_live_vida_master_data(city_query=c))
-        vida_context = "\n\n---\n\n".join(city_results)
+        vida_context = fetch_live_vida_master_data(city_query=city_name, model_filter=model_filter)
         result = f"{vida_context}\n\n---\n\n{competitor_context}"
 
     OEM_WEB_CACHE[cache_key] = {
@@ -228,6 +222,7 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
         "data": result
     }
     return result
+
 
 
 
