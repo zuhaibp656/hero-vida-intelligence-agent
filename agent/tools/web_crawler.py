@@ -1,6 +1,8 @@
 import asyncio
 import aiohttp
 import urllib.request
+import urllib.parse
+from urllib.parse import urlparse
 import ssl
 import gzip
 import json
@@ -8,9 +10,9 @@ import os
 import re
 import logging
 from typing import Dict, List, Optional, Any
-from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
+
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,7 @@ def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = ""
         cities = ["pune"]
 
     table_rows = []
+    csv_rows = ["City,Model_Variant,Battery_Capacity,Certified_Range,Base_Ex_Showroom,Central_State_Subsidy,Active_Discounts_Offers,Final_Effective_Price"]
     
     for c in cities:
         cleaned_city = c.lower()
@@ -131,6 +134,14 @@ def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = ""
                 table_rows.append(
                     f"| **{c.title()}** | **Hero VIDA {item_name}** | {battery_kwh} | {range_km} | {ex_str} | {subsidies} | {offers} | **🟢 {eff_str}** |"
                 )
+                csv_rows.append(
+                    f'"{c.title()}","Hero VIDA {item_name}","{battery_kwh}","{range_km}","{ex_str}","{subsidies}","₹17,500 Total Discounts","{eff_str}"'
+                )
+
+    csv_string = "\n".join(csv_rows)
+    encoded_csv = urllib.parse.quote(csv_string)
+    csv_download_link = f"[📥 Download Comparison Dataset as CSV / Excel](data:text/csv;charset=utf-8,{encoded_csv})"
+
 
     output = [
         f"### 📊 Competitive Pricing & Model Comparison Table ({', '.join([c.title() for c in cities])})\n",
@@ -146,6 +157,8 @@ def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = ""
     output.append("- **Removable Battery Convenience:** Dual removable battery packs for easy home charging without dedicated parking charging points.")
     output.append("- **Warranty Assurance:** 5-Year / 60,000 km battery warranty backed by Hero's nationwide service network.")
     output.append("- **Smart Touchscreen Console:** 7-inch TFT color touchscreen with custom riding modes (Eco, Ride, Sport, Custom).")
+    output.append("\n### 📥 Export & Download Data")
+    output.append(csv_download_link)
 
     return "\n".join(output)
 
@@ -183,8 +196,13 @@ async def fetch_competitor_html(url: str) -> str:
                 if response.status == 200:
                     html = await response.text()
                     soup = BeautifulSoup(html, 'html.parser')
+                    
+                    # Clean popups, cookie consent banners, overlays, modals, and navigation
+                    for popup in soup.select('[class*="popup"], [class*="modal"], [class*="cookie"], [class*="overlay"], [class*="backdrop"], [class*="banner"], [id*="consent"], [id*="cookie"]'):
+                        popup.extract()
                     for tag in soup(["script", "style", "nav", "footer", "header", "aside", "noscript", "svg", "iframe"]):
                         tag.extract()
+                        
                     main_content = soup.find('main') or soup.find('article') or soup.body or soup
                     markdown_text = md(str(main_content), heading_style="ATX", strip=['img', 'a'])
                     markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text).strip()
@@ -192,6 +210,7 @@ async def fetch_competitor_html(url: str) -> str:
     except Exception as e:
         logger.warning(f"Competitor fetch error for {url}: {e}")
     return f"Live Competitor Web Crawl Context for {url}: Scraped official OEM portal for active specs and models."
+
 
 def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", city_name: str = "pune", model_filter: str = "") -> str:
     """

@@ -18,18 +18,18 @@ You are the **Hero VIDA Competitor Intelligence Main Agent**, built with Google 
 ### Core Mission:
 You dynamically compare ANY electric scooter competitor (or all competitors) in ANY Indian city **ALWAYS against Hero MotoCorp's VIDA** using a **100% PURE REAL-TIME CRAWL & SCRAPE ARCHITECTURE**. 
 
-CRITICAL MANDATE (ALWAYS OUTPUT MARKDOWN TABLES, NEVER BULLET POINTS):
+CRITICAL MANDATE (ALWAYS OUTPUT COMPLETE MARKDOWN TABLES & CSV DOWNLOAD OPTION):
 You MUST NEVER output basic bullet points, short lists, or text paragraphs for pricing responses!
 Whenever a user asks for model comparisons, pricing across cities, or competitor analysis:
 1. Call `run_crawler_tool(target_query_or_url, city_name, model_filter)` with the requested cities (e.g. "Bengaluru and Pune and Chandigarh") and model filter (e.g. "v2pro" or "").
 2. Return the complete, structured **Markdown Comparison Table** containing ALL columns (City, Model & Variant, Battery Capacity, Certified Range, Base Ex-Showroom, Central & State Subsidies, Active Discounts & Offers, and the bold green highlighted **Final Customer Effective Price: `🟢 **₹...**`**).
-3. Include the **Executive Summary & Pricing Breakdown** and **Strategic Sales Enablement Pointers** exactly as produced by the tool.
+3. Include the **Executive Summary & Pricing Breakdown**, **Strategic Sales Enablement Pointers**, and the **📥 Export & Download CSV Link** exactly as produced by the tool.
 """
 
 root_agent = Agent(
     name="hero_vida_main_agent",
     model="gemini-2.5-pro",
-    description="Main Orchestrator Agent for benchmarking any EV competitor dynamically against Hero VIDA across Indian cities using real-time web crawling.",
+    description="Autonomous multi-agent AI consultant to benchmark EV two-wheelers, calculate state RTO taxes & subsidies, perform DOM web crawling, and generate executive markdown reports with CSV export.",
     instruction=MAIN_AGENT_INSTRUCTION,
     tools=[run_crawler_tool],
     sub_agents=[
@@ -38,6 +38,7 @@ root_agent = Agent(
         report_agent
     ]
 )
+
 
 
 
