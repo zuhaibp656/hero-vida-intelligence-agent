@@ -191,7 +191,7 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
     """
     Synchronous entrypoint for Google ADK Agent tool calling.
     Crawls official Hero VIDA live master datasets directly from vidaworld.com,
-    and crawls official competitor websites in real time. Stores result in memory cache.
+    and crawls official competitor websites in real time for one or multiple cities. Stores result in memory cache.
     """
     cache_key = f"{target_query_or_url}_{city_name}".lower()
     
@@ -202,14 +202,24 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
         if now - entry["timestamp"] < CACHE_TTL_SECONDS:
             return entry["data"]
 
+    # Parse multi-city queries (e.g. "bengaluru and pune", "delhi, mumbai")
+    cities = [c.strip() for c in re.split(r',| and |&', city_name.strip()) if c.strip()]
+    if not cities:
+        cities = ["pune"]
+
     target_url = resolve_official_oem_url(target_query_or_url)
     
     if "vidaworld" in target_url or "vida" in target_query_or_url.lower():
-        result = fetch_live_vida_master_data(city_query=city_name)
+        city_results = []
+        for c in cities:
+            city_results.append(fetch_live_vida_master_data(city_query=c))
+        result = "\n\n---\n\n".join(city_results)
     else:
-        # Crawl competitor official website + crawl Hero VIDA for comparison
         competitor_context = asyncio.run(fetch_competitor_html(target_url))
-        vida_context = fetch_live_vida_master_data(city_query=city_name)
+        city_results = []
+        for c in cities:
+            city_results.append(fetch_live_vida_master_data(city_query=c))
+        vida_context = "\n\n---\n\n".join(city_results)
         result = f"{vida_context}\n\n---\n\n{competitor_context}"
 
     OEM_WEB_CACHE[cache_key] = {
@@ -217,6 +227,7 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
         "data": result
     }
     return result
+
 
 
 
