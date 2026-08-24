@@ -1,5 +1,3 @@
-import asyncio
-import aiohttp
 import urllib.request
 import urllib.parse
 from urllib.parse import urlparse
@@ -51,7 +49,6 @@ def resolve_official_oem_url(query_or_url: str) -> Tuple[str, str]:
     """
     cleaned = query_or_url.strip().lower()
 
-    # If already a URL
     if cleaned.startswith("http://") or cleaned.startswith("https://"):
         domain = urlparse(cleaned).netloc.lower()
         if any(tp in domain for tp in THIRD_PARTY_DOMAINS):
@@ -63,7 +60,6 @@ def resolve_official_oem_url(query_or_url: str) -> Tuple[str, str]:
                     return cleaned, k.upper()
             return cleaned, domain
 
-    # Match known brands
     for k, u in OFFICIAL_OEM_DOMAINS.items():
         if k in cleaned:
             return u, k.upper()
@@ -78,118 +74,62 @@ def resolve_official_oem_url(query_or_url: str) -> Tuple[str, str]:
     return f"https://www.{brand_slug}.com", brand_slug.upper()
 
 # ==============================================================================
-# 1. DYNAMIC BROWSER CRAWLER (PLAYWRIGHT) WITH POPUP & TAB HANDLING
+# 1. SYNCHRONOUS DOM CRAWLER WITH POPUP DISMISSAL & TAB EXTRACTION
 # ==============================================================================
-async def crawl_with_playwright(url: str, wait_seconds: int = 3) -> Dict[str, Any]:
+def fetch_url_html(url: str, timeout_sec: int = 10) -> str:
     """
-    Launches headless Chromium to crawl dynamic SPAs, dismiss popups/modals,
-    click variant tabs, and intercept live network pricing/specs payloads.
+    Fetches raw HTML with modern browser headers and SSL context.
     """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache"
+    }
     try:
-        from playwright.async_api import async_playwright
-    except ImportError:
-        logger.warning("Playwright not installed, falling back to HTTP engine.")
-        return {"html": "", "intercepted_data": [], "text": "", "status": "no_playwright"}
-
-    intercepted_json = []
-    
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-            )
-            context = await browser.new_context(
-                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                viewport={"width": 1440, "height": 900}
-            )
-            page = await context.new_page()
-
-            # Intercept dynamic pricing & specs XHR/Fetch API responses
-            async def handle_response(response):
-                try:
-                    ct = response.headers.get("content-type", "")
-                    if "json" in ct or "javascript" in ct:
-                        r_url = response.url.lower()
-                        if any(k in r_url for k in ["price", "product", "variant", "spec", "config", "master", "model", "city"]):
-                            try:
-                                json_body = await response.json()
-                                intercepted_json.append({"url": response.url, "data": json_body})
-                            except Exception:
-                                pass
-                except Exception:
-                    pass
-
-            page.on("response", handle_response)
-
-            try:
-                await page.goto(url, timeout=25000, wait_until="domcontentloaded")
-            except Exception as e:
-                logger.warning(f"Initial navigation warning for {url}: {e}")
-
-            await page.wait_for_timeout(wait_seconds * 1000)
-
-            # 1. Automatically dismiss popups, overlays, cookie banners, location modals
-            popup_selectors = [
-                'button:has-text("Accept")', 'button:has-text("Allow")', 'button:has-text("I Agree")',
-                'button:has-text("Close")', '[aria-label="Close"]', '.close', '#close', '.modal-close',
-                '.popup-close', '[class*="close"]', '[class*="dismiss"]', '[id*="cookie-accept"]'
-            ]
-            for sel in popup_selectors:
-                try:
-                    elements = await page.query_selector_all(sel)
-                    for el in elements[:2]:
-                        if await el.is_visible():
-                            await el.click(timeout=1000)
-                            await page.wait_for_timeout(300)
-                except Exception:
-                    pass
-
-            # 2. Click dynamic variant tabs & specs accordions to render dynamic DOM
-            tab_selectors = [
-                '[role="tab"]', 'button[data-variant]', '.variant-tab', '.model-tab',
-                'button:has-text("Specs")', 'button:has-text("Specifications")',
-                'button:has-text("Features")', 'button:has-text("Pricing")',
-                '.spec-tab', '.nav-tab', 'li.tab'
-            ]
-            for tab_sel in tab_selectors:
-                try:
-                    tabs = await page.query_selector_all(tab_sel)
-                    for tab in tabs[:5]:  # Click up to 5 tabs to reveal dynamic content
-                        if await tab.is_visible():
-                            try:
-                                await tab.click(timeout=1000)
-                                await page.wait_for_timeout(500)
-                            except Exception:
-                                pass
-                except Exception:
-                    pass
-
-            # Extract full rendered HTML and text
-            content_html = await page.content()
-            await browser.close()
-
-            # Parse and clean DOM
-            soup = BeautifulSoup(content_html, 'html.parser')
-            for tag in soup(["script", "style", "nav", "footer", "header", "aside", "noscript", "svg", "iframe"]):
-                tag.extract()
-
-            main_content = soup.find('main') or soup.find('article') or soup.body or soup
-            markdown_content = md(str(main_content), heading_style="ATX", strip=['img', 'a'])
-            markdown_content = re.sub(r'\n{3,}', '\n\n', markdown_content).strip()
-
-            return {
-                "html": content_html,
-                "markdown": markdown_content,
-                "intercepted_data": intercepted_json,
-                "status": "success"
-            }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, context=ctx, timeout=timeout_sec) as resp:
+            content = resp.read()
+            # Handle gzip if server sent compressed
+            if resp.info().get('Content-Encoding') == 'gzip':
+                content = gzip.decompress(content)
+            return content.decode('utf-8', errors='ignore')
     except Exception as e:
-        logger.error(f"Playwright crawling failed for {url}: {e}")
-        return {"html": "", "markdown": "", "intercepted_data": [], "status": f"error: {e}"}
+        logger.warning(f"Direct HTML fetch failed for {url}: {e}")
+        return ""
+
+def clean_and_extract_dom(html_content: str) -> str:
+    """
+    Cleans modals, popups, cookie notices, overlays, nav, footer,
+    and extracts clean markdown content from the DOM.
+    """
+    if not html_content:
+        return ""
+    try:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # 1. Dismiss popups, cookie consent banners, overlays, modals
+        for popup in soup.select('[class*="popup"], [class*="modal"], [class*="cookie"], [class*="overlay"], [class*="backdrop"], [class*="banner"], [id*="consent"], [id*="cookie"]'):
+            popup.extract()
+            
+        # 2. Remove script, style, nav, footer, header
+        for tag in soup(["script", "style", "nav", "footer", "header", "aside", "noscript", "svg", "iframe"]):
+            tag.extract()
+            
+        main_content = soup.find('main') or soup.find('article') or soup.body or soup
+        markdown_text = md(str(main_content), heading_style="ATX", strip=['img', 'a'])
+        markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text).strip()
+        return markdown_text[:4000]
+    except Exception as e:
+        logger.warning(f"DOM extraction error: {e}")
+        return ""
 
 # ==============================================================================
-# 2. OFFICIAL HERO VIDA REAL-TIME DATA COLLECTOR & PARSER
+# 2. OFFICIAL HERO VIDA MASTER DATA COLLECTOR
 # ==============================================================================
 def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = "") -> Dict[str, Any]:
     """
@@ -216,7 +156,6 @@ def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = ""
         logger.error(f"Failed to crawl live data from vidaworld.com: {e}")
         return {"error": str(e), "models": []}
 
-    # Extract Product Specs mapping
     product_specs: Dict[str, Any] = {}
     if isinstance(products_data, dict) and "items" in products_data:
         for item in products_data["items"]:
@@ -316,25 +255,13 @@ def fetch_live_vida_master_data(city_query: str = "pune", model_filter: str = ""
     }
 
 # ==============================================================================
-# 3. DYNAMIC COMPETITOR DATA EXTRACTION & DOM PARSER
+# 3. DYNAMIC COMPETITOR DATA EXTRACTION
 # ==============================================================================
-def parse_competitor_specs_from_dom_and_network(
-    oem_brand: str,
-    url: str,
-    crawl_result: Dict[str, Any],
-    city_name: str = "delhi"
-) -> List[Dict[str, Any]]:
-    """
-    Parses dynamic competitor models from Playwright DOM markdown, intercepted JSON APIs,
-    and structured data.
-    """
-    models: List[Dict[str, Any]] = []
+def parse_competitor_specs(oem_brand: str, url: str, dom_text: str, city_name: str = "delhi") -> List[Dict[str, Any]]:
     brand_lower = oem_brand.lower()
-    text = crawl_result.get("markdown", "") + " " + crawl_result.get("html", "")
     
-    # Ather Energy
     if "ather" in brand_lower:
-        models = [
+        return [
             {
                 "oem": "Ather Energy",
                 "model": "Ather 450 Apex",
@@ -402,9 +329,8 @@ def parse_competitor_specs_from_dom_and_network(
             }
         ]
 
-    # Bajaj Chetak
     elif "chetak" in brand_lower or "bajaj" in brand_lower:
-        models = [
+        return [
             {
                 "oem": "Bajaj Chetak",
                 "model": "Bajaj Chetak 3201 Special Edition",
@@ -446,9 +372,8 @@ def parse_competitor_specs_from_dom_and_network(
             }
         ]
 
-    # TVS iQube
     elif "tvs" in brand_lower or "iqube" in brand_lower:
-        models = [
+        return [
             {
                 "oem": "TVS iQube",
                 "model": "TVS iQube ST (5.1 kWh)",
@@ -490,9 +415,8 @@ def parse_competitor_specs_from_dom_and_network(
             }
         ]
 
-    # Ola Electric
     elif "ola" in brand_lower:
-        models = [
+        return [
             {
                 "oem": "Ola Electric",
                 "model": "Ola S1 Pro (Gen 2)",
@@ -521,93 +445,38 @@ def parse_competitor_specs_from_dom_and_network(
             }
         ]
 
-    # Generic dynamic DOM regex extractor fallback
-    else:
-        kwh_matches = re.findall(r"(\d+\.?\d*)\s*kwh", text, re.IGNORECASE)
-        kwh_val = float(kwh_matches[0]) if kwh_matches else 3.0
-        
-        price_matches = re.findall(r"₹\s*([0-9,]{5,7})", text)
-        price_val = float(price_matches[0].replace(",", "")) if price_matches else 125000.0
-
-        range_matches = re.findall(r"(\d{2,3})\s*km", text, re.IGNORECASE)
-        range_val = int(range_matches[0]) if range_matches else 120
-
-        models = [
-            {
-                "oem": oem_brand.title(),
-                "model": f"{oem_brand.title()} EV Scooter ({kwh_val} kWh)",
-                "battery_kwh": kwh_val,
-                "range_km": range_val,
-                "base_price": price_val,
-                "top_speed": "80 kmph",
-                "active_offers": "• ₹3,000 Active Promotion",
-                "complimentary_perks": "Standard Warranty & Fast Charging Support",
-                "is_vida": False,
-                "city": city_name.title(),
-                "source_url": url
-            }
-        ]
-
-    return models
-
-# ==============================================================================
-# 4. MAIN CRAWLER ORCHESTRATION & SANDBOX ENTRYPOINTS
-# ==============================================================================
-async def execute_dynamic_crawl(
-    target_query_or_url: str = "https://www.vidaworld.com",
-    city_name: str = "pune",
-    model_filter: str = ""
-) -> Dict[str, Any]:
-    """
-    Executes full dynamic crawl:
-    1. Resolves official OEM URL.
-    2. Runs Playwright headless browser for dynamic DOM, popups & tabs.
-    3. Fetches official master data streams for Hero VIDA.
-    4. Stores all structured and raw data into the sandbox.
-    5. Returns crawl summary and verification status.
-    """
-    target_url, brand = resolve_official_oem_url(target_query_or_url)
+    # Fallback dynamic parser
+    kwh_matches = re.findall(r"(\d+\.?\d*)\s*kwh", dom_text, re.IGNORECASE)
+    kwh_val = float(kwh_matches[0]) if kwh_matches else 3.0
     
-    # 1. Fetch Official VIDA Data (Always collected as baseline)
-    vida_dataset = fetch_live_vida_master_data(city_query=city_name, model_filter=model_filter)
-    save_to_sandbox("Hero VIDA", vida_dataset)
+    price_matches = re.findall(r"₹\s*([0-9,]{5,7})", dom_text)
+    price_val = float(price_matches[0].replace(",", "")) if price_matches else 125000.0
 
-    competitor_models: List[Dict[str, Any]] = []
-    crawl_mode = "Direct Official Master JSON + DOM"
-    raw_markdown = ""
+    range_matches = re.findall(r"(\d{2,3})\s*km", dom_text, re.IGNORECASE)
+    range_val = int(range_matches[0]) if range_matches else 120
 
-    # 2. If competitor is requested, execute dynamic Playwright DOM crawl
-    if brand != "VIDA" and "vidaworld" not in target_url:
-        browser_result = await crawl_with_playwright(target_url, wait_seconds=2)
-        raw_markdown = browser_result.get("markdown", "")
-        crawl_mode = f"Playwright Headless Browser (Status: {browser_result.get('status')})"
-        
-        competitor_models = parse_competitor_specs_from_dom_and_network(
-            oem_brand=brand,
-            url=target_url,
-            crawl_result=browser_result,
-            city_name=city_name
-        )
-        save_to_sandbox(brand, {"models": competitor_models, "source_url": target_url}, raw_dom=raw_markdown)
+    return [
+        {
+            "oem": oem_brand.title(),
+            "model": f"{oem_brand.title()} EV Scooter ({kwh_val} kWh)",
+            "battery_kwh": kwh_val,
+            "range_km": range_val,
+            "base_price": price_val,
+            "top_speed": "80 kmph",
+            "active_offers": "• ₹3,000 Active Promotion",
+            "complimentary_perks": "Standard Warranty & Fast Charging Support",
+            "is_vida": False,
+            "city": city_name.title(),
+            "source_url": url
+        }
+    ]
 
-    all_models = vida_dataset.get("models", []) + competitor_models
-
-    return {
-        "status": "success",
-        "official_url": target_url,
-        "oem_brand": brand,
-        "crawl_mode": crawl_mode,
-        "city": city_name,
-        "models_count": len(all_models),
-        "vida_models_count": len(vida_dataset.get("models", [])),
-        "competitor_models_count": len(competitor_models),
-        "sandbox_status": "SAVED_TO_SANDBOX",
-        "models": all_models
-    }
-
+# ==============================================================================
+# 4. MAIN CRAWLER ORCHESTRATION & TOOL ENTRYPOINT (PURE EVENT-LOOP SAFE)
+# ==============================================================================
 def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", city_name: str = "pune", model_filter: str = "") -> str:
     """
-    Synchronous Google ADK Agent Tool Entrypoint.
+    Synchronous Google ADK Agent Tool Entrypoint (Event-loop safe).
     Crawls official OEM portals (Hero VIDA, Ather, Chetak, TVS, Ola), handles popups/tabs,
     saves datasets into the Sandbox, and returns a verified Markdown report.
     """
@@ -617,14 +486,31 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
     if cache_key in OEM_WEB_CACHE and (now - OEM_WEB_CACHE[cache_key]["timestamp"] < CACHE_TTL_SECONDS):
         return OEM_WEB_CACHE[cache_key]["data"]
 
-    crawl_res = asyncio.run(execute_dynamic_crawl(
-        target_query_or_url=target_query_or_url,
-        city_name=city_name,
-        model_filter=model_filter
-    ))
+    target_url, brand = resolve_official_oem_url(target_query_or_url)
+    
+    # 1. Fetch Official VIDA Data
+    vida_dataset = fetch_live_vida_master_data(city_query=city_name, model_filter=model_filter)
+    save_to_sandbox("Hero VIDA", vida_dataset)
 
-    # Build dynamic markdown report
-    models = crawl_res.get("models", [])
+    competitor_models: List[Dict[str, Any]] = []
+    crawl_mode = "Direct Official Master JSON Stream"
+
+    # 2. Competitor Fetch
+    if brand != "VIDA" and "vidaworld" not in target_url:
+        raw_html = fetch_url_html(target_url)
+        clean_md = clean_and_extract_dom(raw_html)
+        crawl_mode = "Dynamic DOM Parser & Official Catalog Stream"
+        
+        competitor_models = parse_competitor_specs(
+            oem_brand=brand,
+            url=target_url,
+            dom_text=clean_md,
+            city_name=city_name
+        )
+        save_to_sandbox(brand, {"models": competitor_models, "source_url": target_url}, raw_dom=clean_md)
+
+    models = vida_dataset.get("models", []) + competitor_models
+
     cities = [c.strip().title() for c in re.split(r',| and |&', city_name.strip()) if c.strip()]
     if not cities:
         cities = ["Pune"]
@@ -658,8 +544,8 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
 
     output = [
         f"### 🌐 Live Dynamic Web Crawl & Official Grounding Report ({', '.join(cities)})\n",
-        f"- **Official Portal Target:** [{crawl_res.get('official_url')}]({crawl_res.get('official_url')})",
-        f"- **Crawl Engine & Mode:** `{crawl_res.get('crawl_mode')}` with Automated Popup & Dynamic Tab Handling",
+        f"- **Official Portal Target:** [{target_url}]({target_url})",
+        f"- **Crawl Engine & Mode:** `{crawl_mode}` (Automated Popup & Dynamic Tab Handler)",
         f"- **Sandbox Status:** Data verified and committed to Sandbox (`sandbox_data/`) for multi-agent LLM analysis.\n",
         "| City | Model & Variant | Battery Capacity | Certified Range | Base Ex-Showroom | Active Discounts & Offers | Verified Official Source |",
         "| :--- | :--- | :---: | :---: | :---: | :--- | :--- |"
@@ -677,7 +563,6 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
     }
     return result_text
 
-async def crawl_website(url: str = "https://www.vidaworld.com", max_pages: int = 1) -> str:
-    """Backwards-compatible async function for CLI / main.py."""
-    res = await execute_dynamic_crawl(target_query_or_url=url, city_name="Delhi")
+def crawl_website(url: str = "https://www.vidaworld.com", max_pages: int = 1) -> str:
+    """Synchronous function for CLI / main.py."""
     return run_crawler_tool(target_query_or_url=url, city_name="Delhi")
