@@ -1,0 +1,75 @@
+{
+  "oem": "ATHER",
+  "timestamp": 1787596108,
+  "timestamp_str": "2026-08-24 23:58:28",
+  "data": {
+    "models": [
+      {
+        "oem": "Ather Energy",
+        "model": "Ather 450 Apex",
+        "battery_kwh": 3.7,
+        "range_km": 157,
+        "base_price": 189999.0,
+        "top_speed": "100 kmph",
+        "active_offers": "• ₹5,000 Festive Discount",
+        "complimentary_perks": "Ather Grid Free Fast Charging (1 Year)",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com"
+      },
+      {
+        "oem": "Ather Energy",
+        "model": "Ather 450X (3.7 kWh)",
+        "battery_kwh": 3.7,
+        "range_km": 150,
+        "base_price": 154999.0,
+        "top_speed": "90 kmph",
+        "active_offers": "• ₹5,000 Festive Discount<br>• ₹2,000 Exchange Bonus",
+        "complimentary_perks": "Google Maps navigation on 7-inch touchscreen",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com"
+      },
+      {
+        "oem": "Ather Energy",
+        "model": "Ather 450X (2.9 kWh)",
+        "battery_kwh": 2.9,
+        "range_km": 111,
+        "base_price": 140999.0,
+        "top_speed": "90 kmph",
+        "active_offers": "• ₹3,000 Instant Cash Discount",
+        "complimentary_perks": "Touchscreen console, AutoHold",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com"
+      },
+      {
+        "oem": "Ather Energy",
+        "model": "Ather Rizta Z (3.7 kWh)",
+        "battery_kwh": 3.7,
+        "range_km": 160,
+        "base_price": 144999.0,
+        "top_speed": "80 kmph",
+        "active_offers": "• ₹3,500 Introductory Cash Discount",
+        "complimentary_perks": "Large 34L boot space, Family pillion backrest",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com"
+      },
+      {
+        "oem": "Ather Energy",
+        "model": "Ather Rizta S (2.9 kWh)",
+        "battery_kwh": 2.9,
+        "range_km": 123,
+        "base_price": 121499.0,
+        "top_speed": "80 kmph",
+        "active_offers": "• ₹2,500 Cash Discount",
+        "complimentary_perks": "DeepView display, skid control",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com"
+      }
+    ],
+    "source_url": "https://www.atherenergy.com"
+  }
+}

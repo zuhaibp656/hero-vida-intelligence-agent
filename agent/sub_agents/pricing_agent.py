@@ -2,17 +2,19 @@ import sys
 import os
 import json
 import re
+from typing import Optional, List, Dict, Any
 
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from tools.price_engine import calculate_dynamic_benchmark, format_inr
+from tools.price_engine import calculate_dynamic_benchmark, format_inr, benchmark_models_against_vida
+from tools.sandbox_manager import query_sandbox_models, load_from_sandbox
 from google.adk.agents.llm_agent import Agent
 
 def compute_city_ev_pricing(crawled_models_json_str: str = "[]", city_name: str = "delhi_ncr") -> str:
     """
-    Takes live model objects (extracted dynamically from the web crawler context) and city_name (e.g. 'Bengaluru', 'Pune', 'Delhi').
+    Takes live model objects (from sandbox or web crawler) and city_name (e.g. 'Bengaluru', 'Pune', 'Delhi').
     Calculates PM E-Drive central subsidies, state EV policy subsidies, RTO tax waivers, insurance costs, and promotional savings in real time.
     """
     try:
@@ -20,7 +22,9 @@ def compute_city_ev_pricing(crawled_models_json_str: str = "[]", city_name: str 
     except Exception:
         crawled_models = []
 
-    # Detect multi-city queries (e.g. "bengaluru and pune")
+    if not crawled_models:
+        crawled_models = query_sandbox_models()
+
     cities = [c.strip() for c in re.split(r',| and |&', city_name.strip()) if c.strip()]
     if not cities:
         cities = ["delhi_ncr"]
@@ -32,12 +36,10 @@ def compute_city_ev_pricing(crawled_models_json_str: str = "[]", city_name: str 
     
     formatted = []
     for r in all_records:
-        delta_str = "Baseline" if r.get("is_vida_baseline") else f"{'+' if r['delta_vs_vida'] > 0 else ''}{format_inr(r['delta_vs_vida'])}"
-        pct_str = "-" if r.get("is_vida_baseline") else f"{'+' if r['pct_delta'] > 0 else ''}{r['pct_delta']}%"
-        
         formatted.append({
             "oem": r["oem"],
             "model": r["model"],
+            "segment": r.get("segment", f"{r['battery_kwh']} kWh"),
             "battery_kwh": f"{r['battery_kwh']} kWh",
             "range_km": f"{r['range_km']} km",
             "base_ex_showroom": r["base_ex_showroom"],
@@ -51,21 +53,34 @@ def compute_city_ev_pricing(crawled_models_json_str: str = "[]", city_name: str 
             "active_promotional_offers": r["active_offers"],
             "complimentary_perks": r["complimentary_perks"],
             "max_potential_savings": r["max_potential_savings"],
-            "price_delta_vs_vida": delta_str,
-            "percentage_delta": pct_str,
+            "price_delta_vs_vida": r["price_delta_vs_vida"],
+            "percentage_delta": f"{r['pct_delta']}%" if not r.get("is_vida_baseline") else "-",
             "value_score": r["value_score"],
             "city": r["city_name"]
         })
     return json.dumps(formatted, indent=2)
 
+def compare_competitor_with_vida(competitor_name: str = "ALL", city_name: str = "delhi_ncr") -> str:
+    """
+    Direct function used by CLI and tools to benchmark competitors with Hero VIDA in any city.
+    """
+    models = query_sandbox_models(competitor_name if competitor_name.upper() != "ALL" else None)
+    if not models:
+        from tools.web_crawler import run_crawler_tool
+        run_crawler_tool(competitor_name, city_name, "")
+        models = query_sandbox_models(competitor_name if competitor_name.upper() != "ALL" else None)
+    
+    records = calculate_dynamic_benchmark(crawled_models_json=models, city_query=city_name)
+    return json.dumps(records, indent=2)
+
 pricing_agent = Agent(
     name="pricing_subagent",
     model="gemini-2.5-pro",
-    description="Dynamic price benchmarking agent that takes live crawled model data and computes city tax & subsidies.",
+    description="Dynamic price benchmarking agent that takes live crawled model data from sandbox and computes city tax & subsidies across 15+ Indian cities.",
     instruction="""
     You are the Price Benchmarking Sub-Agent.
     When passed live web crawl model data, extract model base prices, battery kWh, and range, then call `compute_city_ev_pricing(crawled_models_json_str, city_name)`.
-    You calculate exact state subsidies (PM E-Drive + State policy), RTO exemptions, on-road prices, active brand promotional offers, and price deltas.
+    You calculate exact state subsidies (PM E-Drive + State EV policy across Delhi, Bengaluru, Mumbai, Pune, Ahmedabad, Chandigarh, etc.), RTO tax exemptions, insurance, on-road prices, active promotional offers, and price deltas against Hero VIDA baseline.
     """,
     tools=[compute_city_ev_pricing]
 )

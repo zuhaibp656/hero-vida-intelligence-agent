@@ -1,5 +1,6 @@
 import re
 from typing import Dict, List, Any, Optional
+from tools.sandbox_manager import query_sandbox_models, load_from_sandbox
 
 # ==============================================================================
 # 1. STATE TAX & EV SUBSIDY RULES ACROSS INDIAN CITIES
@@ -36,16 +37,29 @@ CITY_TAX_RULES = {
     "patna": {"name": "Patna", "state": "BR", "region": "East", "subsidy_kwh": 5000, "max_subsidy": 7500, "rto_pct": 0.0, "insurance": 5200}
 }
 
-# ==============================================================================
-# 2. DYNAMIC REAL-TIME CRAWL-DRIVEN PRICING & SUBSIDY CALCULATOR
-# ==============================================================================
 def resolve_city_rules(city_query: str) -> Dict[str, Any]:
     cleaned = city_query.strip().lower().replace("-", "_").replace(" ", "_")
     for k, v in CITY_TAX_RULES.items():
         if k in cleaned or cleaned in k:
             return v
-    # Default to standard Delhi-NCR policy if unknown city
     return CITY_TAX_RULES["delhi_ncr"]
+
+def format_inr(val: float) -> str:
+    is_neg = val < 0
+    s = f"{int(round(abs(val)))}"
+    if len(s) <= 3:
+        res = f"₹{s}"
+    else:
+        last3 = s[-3:]
+        rem = s[:-3]
+        groups = []
+        while len(rem) > 2:
+            groups.insert(0, rem[-2:])
+            rem = rem[:-2]
+        if rem:
+            groups.insert(0, rem)
+        res = f"₹{','.join(groups)},{last3}"
+    return f"-{res}" if is_neg else res
 
 def calculate_on_road_price(
     base_price: float, 
@@ -89,34 +103,20 @@ def calculate_on_road_price(
         "max_potential_savings": total_max_discount
     }
 
-def format_inr(val: float) -> str:
-    is_neg = val < 0
-    s = f"{int(round(abs(val)))}"
-    if len(s) <= 3:
-        res = f"₹{s}"
-    else:
-        last3 = s[-3:]
-        rem = s[:-3]
-        groups = []
-        while len(rem) > 2:
-            groups.insert(0, rem[-2:])
-            rem = rem[:-2]
-        if rem:
-            groups.insert(0, rem)
-        res = f"₹{','.join(groups)},{last3}"
-    return f"-{res}" if is_neg else res
-
 def calculate_dynamic_benchmark(
     crawled_models_json: List[Dict[str, Any]],
     city_query: str = "delhi_ncr"
 ) -> List[Dict[str, Any]]:
     """
-    Takes live real-time crawled model parameters (from vidaworld.com and competitor sites)
-    and computes dynamic city tax, subsidies, on-road prices, and deltas in real time.
-    Zero hardcoded model prices in python code!
+    Takes live real-time crawled model parameters (from Sandbox or Crawler)
+    and computes dynamic city tax, subsidies, on-road prices, and deltas against Hero VIDA baseline.
     """
     city_rules = resolve_city_rules(city_query)
     
+    if not crawled_models_json:
+        # Fallback to sandbox models if input list is empty
+        crawled_models_json = query_sandbox_models()
+
     if not crawled_models_json:
         return []
 
@@ -129,10 +129,10 @@ def calculate_dynamic_benchmark(
         base_price = float(item.get("base_price", 120000.0))
         battery_kwh = float(item.get("battery_kwh", 3.4))
         range_km = int(item.get("range_km", 140))
-        is_vida = item.get("is_vida", "vida" in oem.lower() or "hero" in oem.lower())
+        is_vida = item.get("is_vida", "vida" in oem.lower() or "hero" in oem.lower() or "vida" in model.lower())
 
         cash_disc = float(item.get("cash_discount", 5000.0 if is_vida else 3000.0))
-        exch_bonus = float(item.get("exchange_bonus", 10000.0 if is_vida else 3000.0))
+        exch_bonus = float(item.get("exchange_bonus", 10000.0 if is_vida else 2000.0))
         corp_bonus = float(item.get("corporate_bonus", 2500.0 if is_vida else 1500.0))
         offers_summary = item.get("active_offers", None)
         perks_summary = item.get("complimentary_perks", None)
@@ -153,12 +153,13 @@ def calculate_dynamic_benchmark(
             baseline_vida_orp = cost["effective_orp"]
 
         delta = cost["effective_orp"] - baseline_vida_orp if baseline_vida_orp > 0 else 0.0
-        pct_delta = round((delta / cost["effective_orp"]) * 100.0, 2) if cost["effective_orp"] > 0 else 0.0
-        val_score = round(range_km / (cost["effective_orp"] / 100000.0), 2) if cost["effective_orp"] > 0 else 0.0
+        pct_delta = round((delta / cost["effective_orp"]) * 100.0, 1) if cost["effective_orp"] > 0 else 0.0
+        val_score = round(range_km / (cost["effective_orp"] / 100000.0), 1) if cost["effective_orp"] > 0 else 0.0
 
         rows.append({
             "oem": oem,
             "model": f"{model} [HERO VIDA BASELINE]" if is_vida else model,
+            "segment": f"{battery_kwh} kWh / {range_km} km",
             "battery_kwh": battery_kwh,
             "range_km": range_km,
             "base_ex_showroom": format_inr(cost["base_price"]),
@@ -173,10 +174,12 @@ def calculate_dynamic_benchmark(
             "complimentary_perks": cost["complimentary_perks"],
             "max_potential_savings": format_inr(cost["max_potential_savings"]),
             "delta_vs_vida": delta,
+            "price_delta_vs_vida": "Baseline" if is_vida else f"{'+' if delta > 0 else ''}{format_inr(delta)}",
             "pct_delta": pct_delta,
             "value_score": val_score,
             "is_vida_baseline": is_vida,
-            "city_name": city_rules["name"]
+            "city_name": city_rules["name"],
+            "city": city_rules["name"]
         })
 
     return rows
@@ -189,12 +192,6 @@ def benchmark_models_against_vida(
     """
     Synchronous ADK Tool entrypoint.
     Computes tax, subsidy, on-road prices, and deltas strictly on live crawled model inputs.
-    Zero hardcoded models in python code!
     """
-    models_to_calc = crawled_models or []
+    models_to_calc = crawled_models or query_sandbox_models(competitor_query if competitor_query != "ALL" else None)
     return calculate_dynamic_benchmark(models_to_calc, city_query)
-
-
-
-
-
