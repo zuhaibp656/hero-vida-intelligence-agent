@@ -101,6 +101,7 @@ async def interactive_chat():
                 "class_method": "async_stream_query",
                 "input": {
                     "message": user_input,
+                    "user_id": "zuhaibp",
                     "session_id": session_id
                 }
             }
