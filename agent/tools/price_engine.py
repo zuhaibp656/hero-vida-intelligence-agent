@@ -38,11 +38,15 @@ CITY_TAX_RULES = {
 }
 
 def resolve_city_rules(city_query: str) -> Dict[str, Any]:
+    from tools.web_crawler import CITY_ALIASES
     cleaned = city_query.strip().lower().replace("-", "_").replace(" ", "_")
+    alias_std = CITY_ALIASES.get(cleaned.replace("_", ""), "").lower()
+    
     for k, v in CITY_TAX_RULES.items():
-        if k in cleaned or cleaned in k:
+        if k == cleaned or k == alias_std or k in cleaned or cleaned in k:
             return v
     return CITY_TAX_RULES["delhi_ncr"]
+
 
 def format_inr(val: float) -> str:
     is_neg = val < 0

@@ -1,10 +1,10 @@
 {
   "oem": "Hero VIDA",
-  "timestamp": 1787633454,
-  "timestamp_str": "2026-08-25 10:20:54",
+  "timestamp": 1787833572,
+  "timestamp_str": "2026-08-27 17:56:12",
   "data": {
     "oem": "Hero VIDA",
-    "city": "pune",
+    "city": "Pune",
     "models": [
       {
         "oem": "Hero VIDA",
@@ -26,7 +26,7 @@
       {
         "oem": "Hero VIDA",
         "model": "Hero VIDA VIDA DIRT.E K3",
-        "battery_kwh": 3.4,
+        "battery_kwh": 3.9,
         "range_km": 92,
         "certified_range": "92 km",
         "base_price": 69990.0,
@@ -60,7 +60,7 @@
       {
         "oem": "Hero VIDA",
         "model": "Hero VIDA VX2 Go 2.2 RQ",
-        "battery_kwh": 2.2,
+        "battery_kwh": 3.9,
         "range_km": 93,
         "certified_range": "93 km",
         "base_price": 114990.0,
@@ -162,7 +162,7 @@
       {
         "oem": "Hero VIDA",
         "model": "Hero VIDA V2 LITE",
-        "battery_kwh": 3.4,
+        "battery_kwh": 2.2,
         "range_km": 94,
         "certified_range": "94 km",
         "base_price": 85000.0,

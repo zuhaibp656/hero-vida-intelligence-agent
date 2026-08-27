@@ -25,9 +25,10 @@ def compute_city_ev_pricing(crawled_models_json_str: str = "[]", city_name: str 
     if not crawled_models:
         crawled_models = query_sandbox_models()
 
-    cities = [c.strip() for c in re.split(r',| and |&', city_name.strip()) if c.strip()]
+    from tools.web_crawler import parse_cities
+    cities = parse_cities(city_name)
     if not cities:
-        cities = ["delhi_ncr"]
+        cities = ["DELHI"]
 
     all_records = []
     for city in cities:

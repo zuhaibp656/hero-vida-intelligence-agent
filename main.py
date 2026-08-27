@@ -128,16 +128,13 @@ async def interactive_chat():
 
         # Local execution fallback
         console.print("\n[bold purple]VIDA Agent (Local Multi-Agent Runtime):[/bold purple]")
-        # Parse city and competitor from input
-        city = "Delhi"
-        for c in ["bengaluru", "bangalore", "pune", "mumbai", "ahmedabad", "chandigarh", "jaipur", "lucknow", "hyderabad", "chennai", "kolkata"]:
-            if c in user_input.lower():
-                city = c.title()
-                break
+        from agent.tools.web_crawler import parse_cities
+        cities = parse_cities(user_input)
+        city_str = ", ".join(cities)
         
-        target = "ather" if "ather" in user_input.lower() else ("chetak" if "chetak" in user_input.lower() else ("iqube" if "iqube" in user_input.lower() or "tvs" in user_input.lower() else ("ola" if "ola" in user_input.lower() else "vida")))
-        result_md = run_crawler_tool(target, city, "")
+        result_md = run_crawler_tool(target_query_or_url=user_input, city_name=city_str)
         console.print(result_md)
+
 
 async def main():
     console.print(Panel(
