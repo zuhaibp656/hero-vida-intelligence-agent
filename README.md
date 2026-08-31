@@ -263,6 +263,23 @@ flowchart LR
    https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/<AGENT_ENGINE_ID>/playground?project=<CUSTOMER_PROJECT_ID>
    ```
 
+#### Step 6: Register & Deploy to Gemini Enterprise (Agent Space)
+To make the agent accessible to Hero MotoCorp employees directly inside **Gemini Enterprise**:
+1. **Gemini Enterprise App Configuration**:
+   - The deployment script automatically sets `GOOGLE_GENAI_USE_ENTERPRISE=1` and builds the ADK container with `--gemini_enterprise_app_name=agent`.
+2. **Register in Google Cloud Console**:
+   - Open **Google Cloud Console** > **Vertex AI** > **Agent Space** (or **Gemini Enterprise**).
+   - Navigate to **Connected Agents / Extensions / Tools**.
+   - Click **Add Agent** and select **Vertex AI Reasoning Engine**.
+   - Enter your deployed resource path:
+     `projects/<CUSTOMER_PROJECT_ID>/locations/<REGION>/reasoningEngines/<AGENT_ENGINE_ID>`
+3. **Enterprise Access & IAM Roles**:
+   - Grant Hero employees or Google Workspace groups the **Vertex AI User** role (`roles/aiplatform.user`).
+4. **Invoke Directly in Gemini Enterprise Chat**:
+   - In the Gemini Enterprise workplace interface, users can query the agent by mention:
+     > `@hero-vida-agent Compare VIDA V2 Pro with Ather Rizta in Bangalore and Delhi`
+   - The agent responds with live comparative pricing tables, subsidy breakdowns, and direct Google Cloud Storage CSV download links.
+
 ---
 
 ### Option B: Google Cloud Run (Containerized Microservice)

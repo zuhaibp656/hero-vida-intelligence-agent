@@ -603,12 +603,13 @@ def build_executive_brief_document():
     p_dep.add_run("The agent has been engineered for immediate, zero-friction adoption across Hero MotoCorp's technical infrastructure. Depending on the intended audience and security requirements, Hero can choose from three deployment topologies:")
 
     deploy_topologies = [
-        ("Option A: Vertex AI Agent Engine (Recommended — Fully Managed Serverless)",
-         "• Architecture: Deployed on Google Cloud Vertex AI Reasoning Engine / Agent Engine.\n"
-         "• Business Advantages: Serverless auto-scaling, zero virtual machine management, built-in session state memory, and a secure browser playground for leadership testing.\n"
+        ("Option A: Vertex AI Agent Engine & Gemini Enterprise (Recommended — Managed Serverless)",
+         "• Architecture: Deployed on Google Cloud Vertex AI Agent Platform (Reasoning Engine) with native Gemini Enterprise integration.\n"
+         "• Business Advantages: Serverless auto-scaling, zero virtual machine management, built-in session state memory, and multi-channel access (Google Cloud Console Playground + Gemini Enterprise chat).\n"
          "• Deployment Process: 1-click deployment using the included deploy.sh script or adk deploy agent_engine.\n"
-         "• Prerequisites: A Google Cloud Project (e.g. hero-digital-ai) with roles/aiplatform.user and roles/storage.objectAdmin.\n"
-         "• Access URL: Accessible via Google Cloud Console Vertex AI Playground immediately upon deployment."),
+         "• Gemini Enterprise Integration: Pre-configured with GOOGLE_GENAI_USE_ENTERPRISE=1 and --gemini_enterprise_app_name=agent. Hero IT links the Reasoning Engine resource (projects/<PROJECT_ID>/locations/<REGION>/reasoningEngines/<ENGINE_ID>) in Vertex AI Agent Space / Gemini Enterprise under 'Connected Agents'.\n"
+         "• Enterprise User Access: Hero sales directors and commercial teams can query the agent directly inside Gemini Enterprise chat via @hero-vida-agent to receive live on-road pricing and 1-click Cloud Storage CSV downloads.\n"
+         "• Prerequisites: A Google Cloud Project (e.g. hero-digital-ai) with roles/aiplatform.user and roles/storage.objectAdmin."),
 
         ("Option B: Google Cloud Run (Containerized Microservice for Private VPCs)",
          "• Architecture: Packaged as a lightweight container exposing standard REST & WebSocket endpoints.\n"

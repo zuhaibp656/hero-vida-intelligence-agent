@@ -52,10 +52,13 @@ echo "Project: $PROJECT_ID | Region: $REGION"
 # Set up environment variables
 export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
 export GOOGLE_CLOUD_LOCATION="$REGION"
+export GOOGLE_GENAI_USE_ENTERPRISE=1
 export PYTHONPATH="$DIR"
 
 # Disable telemetry prompt
 ./venv/bin/adk telemetry disable 2>/dev/null || true
+
+echo "Configured for Google Cloud Agent Platform & Gemini Enterprise (GOOGLE_GENAI_USE_ENTERPRISE=1)..."
 
 if [ "$ENGINE_CHOICE" = "new" ] || [ -z "$ENGINE_CHOICE" ]; then
   echo "Action: Provisioning a fresh Agent Engine instance in $REGION..."
@@ -78,7 +81,21 @@ fi
 
 echo ""
 echo "=========================================================="
-echo " Deployment Complete!"
-echo " Google Cloud Console Playground:"
-echo " https://console.cloud.google.com/vertex-ai/agents/agent-engines?project=$PROJECT_ID"
+echo " 🚀 Deployment to Google Cloud Agent Platform Complete!"
+echo "=========================================================="
+echo ""
+echo "1. Vertex AI Agent Playground:"
+echo "   👉 https://console.cloud.google.com/vertex-ai/agents/agent-engines?project=$PROJECT_ID"
+echo ""
+echo "2. Gemini Enterprise Integration:"
+echo "   • This agent is built with Gemini Enterprise support (--gemini_enterprise_app_name=agent)."
+echo "   • To connect to Gemini Enterprise / Agent Space:"
+echo "     a. Go to Google Cloud Console > Vertex AI > Agent Space / Gemini Enterprise."
+echo "     b. Under 'Connected Agents / Tools', register the newly deployed Reasoning Engine:"
+echo "        projects/$PROJECT_ID/locations/$REGION/reasoningEngines/<ENGINE_ID>"
+echo "     c. Enable corporate user access via IAM role 'roles/aiplatform.user'."
+echo "     d. Users can now query @hero-vida-agent directly inside Gemini Enterprise chat!"
+echo ""
+echo "3. Reports Storage Bucket:"
+echo "   👉 https://console.cloud.google.com/storage/browser/${PROJECT_ID}-hero-vida-reports/reports?project=$PROJECT_ID"
 echo "=========================================================="
