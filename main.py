@@ -75,10 +75,13 @@ def get_auth_headers():
 
 async def interactive_chat():
     session_id = str(uuid.uuid4())
-    PROJECT_ID = "zuhaibp-ai"
-    LOCATION = "us-central1"
-    ENGINE_ID = "8827320801704280064"
-    URL = f"https://{LOCATION}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{ENGINE_ID}:streamQuery"
+    PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+    LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+    ENGINE_ID = os.environ.get("AGENT_ENGINE_ID", "")
+    user_identity = os.environ.get("USER", "hero_user")
+    
+    can_stream_remote = bool(PROJECT_ID and ENGINE_ID)
+    URL = f"https://{LOCATION}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{ENGINE_ID}:streamQuery" if can_stream_remote else ""
     
     console.print(Panel(
         "[bold green]Entering Interactive Agent Mode.[/bold green]\n"
@@ -101,13 +104,13 @@ async def interactive_chat():
         effective_query = f"{last_context} and {user_input}" if (is_followup and last_context) else user_input
         last_context = effective_query
 
-        headers = get_auth_headers()
-        if headers:
+        headers = get_auth_headers() if can_stream_remote else None
+        if headers and can_stream_remote:
             payload = {
                 "class_method": "async_stream_query",
                 "input": {
                     "message": user_input,
-                    "user_id": "zuhaibp",
+                    "user_id": user_identity,
                     "session_id": session_id
                 }
             }

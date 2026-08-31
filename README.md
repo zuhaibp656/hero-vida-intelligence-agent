@@ -186,15 +186,15 @@ Every comparison query automatically generates a clean, RFC-compliant CSV datase
 ```markdown
 ### 📥 Verified CSV Export & Cloud Storage Download
 - **🌐 Google Cloud Console Storage Link (1-Click Download):**
-  👉 [hero_vida_comparison_vida_pune_ahmedabad_20260831_181727.csv in Cloud Storage Console](https://console.cloud.google.com/storage/browser/_details/zuhaibp-ai-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad_20260831_181727.csv?project=zuhaibp-ai)
+  👉 [hero_vida_comparison_vida_pune_ahmedabad.csv in Cloud Storage Console](https://console.cloud.google.com/storage/browser/_details/<YOUR_GCP_PROJECT_ID>-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad.csv?project=<YOUR_GCP_PROJECT_ID>)
 - **⚡ Direct Authenticated Download URL:**
-  🔗 [https://storage.cloud.google.com/zuhaibp-ai-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad_20260831_181727.csv](https://storage.cloud.google.com/zuhaibp-ai-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad_20260831_181727.csv)
+  🔗 [https://storage.cloud.google.com/<YOUR_GCP_PROJECT_ID>-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad.csv](https://storage.cloud.google.com/<YOUR_GCP_PROJECT_ID>-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad.csv)
 - **🪣 Cloud Storage Bucket URI:**
-  `gs://zuhaibp-ai-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad_20260831_181727.csv`
+  `gs://<YOUR_GCP_PROJECT_ID>-hero-vida-reports/reports/hero_vida_comparison_vida_pune_ahmedabad.csv`
 - **📁 All Reports Storage Folder:**
-  🔗 [Browse Storage Bucket](https://console.cloud.google.com/storage/browser/zuhaibp-ai-hero-vida-reports/reports?project=zuhaibp-ai)
+  🔗 [Browse Storage Bucket](https://console.cloud.google.com/storage/browser/<YOUR_GCP_PROJECT_ID>-hero-vida-reports/reports?project=<YOUR_GCP_PROJECT_ID>)
 - **💻 Local Sandbox File:**
-  `/Users/.../reports/hero_vida_comparison_vida_pune_ahmedabad_20260831_181727.csv`
+  `reports/hero_vida_comparison_vida_pune_ahmedabad.csv`
 
 <details open>
 <summary><b>📋 Raw CSV Dataset (Direct Console Access - Copy / View)</b></summary>
@@ -360,7 +360,7 @@ from google.adk.agents.llm_agent import Agent
 hero_vida_intelligence_agent = RemoteAgent(
     name="hero_vida_intelligence",
     description="Live benchmark and pricing specialist for Hero VIDA and all Indian EV scooters.",
-    address="agentengine://projects/zuhaibp-ai/locations/us-central1/reasoningEngines/8827320801704280064"
+    address="agentengine://projects/<YOUR_GCP_PROJECT_ID>/locations/<REGION>/reasoningEngines/<YOUR_ENGINE_ID>"
 )
 
 # 2. Add as a sub-agent or tool to your main customer service / sales agent
@@ -378,7 +378,7 @@ Any application (Node.js, Go, Java, Python) can invoke the agent:
 curl -X POST \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/json" \
-  "https://us-central1-aiplatform.googleapis.com/v1beta1/projects/zuhaibp-ai/locations/us-central1/reasoningEngines/8827320801704280064:streamQuery" \
+  "https://<REGION>-aiplatform.googleapis.com/v1beta1/projects/<YOUR_GCP_PROJECT_ID>/locations/<REGION>/reasoningEngines/<YOUR_ENGINE_ID>:streamQuery" \
   -d '{
     "class_method": "async_stream_query",
     "input": {
@@ -393,13 +393,13 @@ curl -X POST \
 To share this agent with another Google Cloud project or business unit:
 1. Grant the caller's Service Account the **Vertex AI User** role on the Reasoning Engine:
    ```bash
-   gcloud projects add-iam-policy-binding zuhaibp-ai \
+   gcloud projects add-iam-policy-binding <YOUR_GCP_PROJECT_ID> \
      --member="serviceAccount:partner-service-account@external-project.iam.gserviceaccount.com" \
      --role="roles/aiplatform.user"
    ```
 2. Grant read access to the Cloud Storage reports bucket:
    ```bash
-   gcloud storage buckets add-iam-policy-binding gs://zuhaibp-ai-hero-vida-reports \
+   gcloud storage buckets add-iam-policy-binding gs://<YOUR_GCP_PROJECT_ID>-hero-vida-reports \
      --member="serviceAccount:partner-service-account@external-project.iam.gserviceaccount.com" \
      --role="roles/storage.objectViewer"
    ```
@@ -412,7 +412,7 @@ Configure via environment variables or a `.env` file in the project root:
 
 | Variable | Required | Default | Description |
 | :--- | :---: | :--- | :--- |
-| `GOOGLE_CLOUD_PROJECT` | Yes | `zuhaibp-ai` | Target GCP project ID for Vertex AI Reasoning Engine and Cloud Storage. |
+| `GOOGLE_CLOUD_PROJECT` | Yes | `<YOUR_GCP_PROJECT_ID>` | Target GCP project ID for Vertex AI Reasoning Engine and Cloud Storage. |
 | `GOOGLE_CLOUD_LOCATION` | Yes | `us-central1` | GCP region for Reasoning Engine and Cloud Run deployment. |
 | `GCS_BUCKET_NAME` | Optional | `{project}-hero-vida-reports` | Cloud Storage bucket name where comparison CSV exports are uploaded. |
 | `GEMINI_API_KEY` | Optional | `None` | Required only when testing outside GCP without Application Default Credentials (ADC). |
@@ -422,7 +422,7 @@ Configure via environment variables or a `.env` file in the project root:
 
 ## 9. Automated Verification & Test Suite
 
-The project includes an end-to-end automated test suite ([`tests/test_agent_and_crawler.py`](file:///Users/zuhaibp/Documents/Argolis/Hero_competitor_analysis_agent/tests/test_agent_and_crawler.py)) verifying real-time web crawlers, subsidy calculations, slang city resolvers, multi-city combinations, and CSV Cloud Storage generation.
+The project includes an end-to-end automated test suite ([`tests/test_agent_and_crawler.py`](tests/test_agent_and_crawler.py)) verifying real-time web crawlers, subsidy calculations, slang city resolvers, multi-city combinations, and CSV Cloud Storage generation.
 
 Run the test suite:
 ```bash

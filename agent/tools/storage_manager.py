@@ -155,7 +155,7 @@ def export_and_upload_csv(
         logger.error(f"Error saving local CSV: {e}")
 
     # 2. Cloud Storage upload & link building
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("PROJECT_ID") or "zuhaibp-ai"
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("PROJECT_ID") or "hero-vida-project"
     bucket_name = os.environ.get("GCS_BUCKET_NAME") or os.environ.get("BUCKET_NAME") or f"{project_id}-hero-vida-reports"
 
     # Direct Google Cloud Console Link (opens object directly in Cloud Console Storage browser with 1-click Download)

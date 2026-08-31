@@ -441,7 +441,7 @@ def build_executive_brief_document():
          "• What it is: The agent runs entirely on Google Cloud's managed Vertex AI Agent Engine.\n"
          "• Business Benefit: Zero servers to manage, automated autoscaling, enterprise security, built-in session state memory, and an interactive Cloud Console Playground for leadership testing.\n"
          "• How it deploys: 1-click deployment using deploy.sh or adk deploy agent_engine.\n"
-         "• Live Endpoint: Already deployed on Google Cloud in us-central1 (Instance ID: 8827320801704280064)."),
+         "• Target Environment: Deployed directly into Hero MotoCorp's Google Cloud project (e.g. us-central1 or asia-south1)."),
 
         ("Option B: Google Cloud Run (Containerized Microservice for Private VPCs)",
          "• What it is: Packaged as a standard Docker container hosted on Google Cloud Run.\n"
@@ -499,7 +499,7 @@ def build_executive_brief_document():
         "# Connect to the live Hero VIDA Agent via A2A URI:\n"
         "hero_intelligence = RemoteAgent(\n"
         "    name='hero_vida_intelligence',\n"
-        "    address='agentengine://projects/zuhaibp-ai/locations/us-central1/reasoningEngines/8827320801704280064'\n"
+        "    address='agentengine://projects/<YOUR_HERO_GCP_PROJECT>/locations/<REGION>/reasoningEngines/<AGENT_ENGINE_ID>'\n"
         ")\n"
         "# Now your existing customer bots can delegate any competitor query to this specialist!"
     )
@@ -520,23 +520,23 @@ def build_executive_brief_document():
     p_tech_intro.add_run("When handing this solution to Hero MotoCorp's engineering or cloud infrastructure team, please provide them with the following assets and pointers:")
 
     resources = [
-        ("📘 Complete Technical Documentation (README.md)",
+        ("Complete Technical Documentation (README.md)",
          "Contains full architectural flowcharts, sequence diagrams, detailed API contracts, parameter descriptions, and environment configuration instructions.\nFile: README.md in repository root."),
 
-        ("🚀 1-Click Deployment Script (deploy.sh)",
-         "Automated deployment script that handles packaging, container builds, and in-place updates on Vertex AI Agent Engine.\nFile: deploy.sh in repository root."),
+        ("1-Click Deployment Script (deploy.sh)",
+         "Automated deployment script that prompts for Hero's GCP Project ID, region, and automatically provisions or updates the Agent Engine instance.\nFile: deploy.sh in repository root."),
 
-        ("🧪 Comprehensive Automated Test Suite (tests/)",
+        ("Comprehensive Automated Test Suite (tests/)",
          "Includes 14 automated unit and integration tests verifying real-time web crawlers, subsidy calculations, slang resolvers, and CSV Cloud Storage generation.\nCommand: PYTHONPATH=. ./venv/bin/pytest tests/ -v (All 14 tests passing)."),
 
-        ("💻 Code Repository",
-         "Complete high-code Python repository built with Google ADK:\nGitHub Repository: https://github.com/zuhaibp656/hero-vida-agent.git"),
+        ("Code Repository",
+         "Complete high-code Python repository built with Google ADK:\nRepository Package: Hero_competitor_analysis_agent (Customer Distribution Branch)"),
 
-        ("🎮 Live Interactive Playground (Test in Browser Right Now)",
-         "Google Cloud Console Vertex AI Playground URL:\nhttps://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/8827320801704280064/playground?project=zuhaibp-ai"),
+        ("Google Cloud Console Vertex AI Playground",
+         "Once deployed into Hero's project, the interactive playground is immediately accessible to business users at:\nhttps://console.cloud.google.com/vertex-ai/agents/agent-engines?project=<YOUR_HERO_GCP_PROJECT>"),
 
-        ("🪣 Google Cloud Storage Reports Bucket",
-         "Direct link to generated comparison spreadsheets in Cloud Storage Console:\nhttps://console.cloud.google.com/storage/browser/zuhaibp-ai-hero-vida-reports/reports?project=zuhaibp-ai")
+        ("Google Cloud Storage Reports Bucket",
+         "Generated comparison spreadsheets will automatically reside in Hero's private storage bucket:\ngs://<YOUR_HERO_GCP_PROJECT>-hero-vida-reports/reports/")
     ]
 
     for title, details in resources:
