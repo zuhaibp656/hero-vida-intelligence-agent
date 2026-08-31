@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 .pytest_cache/
 agent_tmp*/
+reports/
+agent/sandbox_data/csv/
+docs_assets/

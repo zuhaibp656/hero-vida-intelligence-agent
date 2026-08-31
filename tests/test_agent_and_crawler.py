@@ -163,4 +163,63 @@ def test_crawler_execution():
     assert "Pune" in output
     assert "Download" in output
 
+def test_slangs_and_colloquial_cities():
+    cities = parse_cities("what is the price in dilli, blr, bombay, poona, hyd and amdavad?")
+    assert "DELHI" in cities
+    assert "BENGALURU" in cities
+    assert "MUMBAI" in cities
+    assert "PUNE" in cities
+    assert "HYDERABAD" in cities
+    assert "AHMEDABAD" in cities
+
+def test_csv_generation_and_storage_links():
+    from agent.tools.storage_manager import export_and_upload_csv, export_csv_report_tool
+    sample_records = [
+        {
+            "city": "Delhi",
+            "oem": "Hero VIDA",
+            "model": "Hero VIDA V2 Pro",
+            "battery_kwh": 3.9,
+            "range_km": 165,
+            "top_speed": "90 kmph",
+            "base_price": 155000,
+            "effective_price": 120000,
+            "active_offers": "• ₹35,000 Total Benefits",
+            "source_url": "https://www.vidaworld.com"
+        },
+        {
+            "city": "Bengaluru",
+            "oem": "Ather",
+            "model": "Ather Rizta S",
+            "battery_kwh": 2.9,
+            "range_km": 123,
+            "top_speed": "80 kmph",
+            "base_price": 130998,
+            "effective_price": 146004,
+            "active_offers": "Standard Ex-Showroom",
+            "source_url": "https://www.atherenergy.com/rizta"
+        }
+    ]
+    res = export_and_upload_csv(sample_records, query_context="test_export")
+    assert res["filename"].endswith(".csv")
+    assert os.path.exists(res["local_path"])
+    assert "console.cloud.google.com/storage/browser/_details" in res["console_file_url"]
+    assert "storage.cloud.google.com" in res["storage_direct_url"]
+    assert res["gs_uri"].startswith("gs://")
+    assert "City,OEM_Brand,Model_Variant" in res["csv_content"]
+
+def test_same_company_different_models_different_cities():
+    # Same company: Hero VIDA, multiple variants across multiple cities
+    output = run_crawler_tool(
+        target_query_or_url="https://www.vidaworld.com",
+        city_name="Delhi and Bengaluru",
+        model_filter="v2 pro and vx2 plus"
+    )
+    assert "Delhi" in output
+    assert "Bengaluru" in output
+    assert "Hero VIDA V2 PRO" in output
+    assert "VX2 PLUS" in output
+    assert "Cloud Storage Console" in output
+    assert "```csv" in output
+
 

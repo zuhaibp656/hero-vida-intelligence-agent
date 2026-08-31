@@ -88,12 +88,18 @@ async def interactive_chat():
         border_style="green"
     ))
 
+    last_context = ""
     while True:
         user_input = Prompt.ask("\n[bold cyan]You[/bold cyan]")
         if user_input.strip().lower() in ['exit', 'quit', '0']:
             break
         if not user_input.strip():
             continue
+
+        # Check if user query is a follow-up continuing the previous context
+        is_followup = any(user_input.lower().startswith(prefix) for prefix in ["now", "also", "and", "what about", "add", "compare with", "how about", "in ", "which"])
+        effective_query = f"{last_context} and {user_input}" if (is_followup and last_context) else user_input
+        last_context = effective_query
 
         headers = get_auth_headers()
         if headers:
@@ -129,10 +135,10 @@ async def interactive_chat():
         # Local execution fallback
         console.print("\n[bold purple]VIDA Agent (Local Multi-Agent Runtime):[/bold purple]")
         from agent.tools.web_crawler import parse_cities
-        cities = parse_cities(user_input)
+        cities = parse_cities(effective_query)
         city_str = ", ".join(cities)
         
-        result_md = run_crawler_tool(target_query_or_url=user_input, city_name=city_str)
+        result_md = run_crawler_tool(target_query_or_url=effective_query, city_name=city_str)
         console.print(result_md)
 
 
