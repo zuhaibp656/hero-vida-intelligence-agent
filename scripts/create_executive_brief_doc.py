@@ -410,8 +410,8 @@ def build_executive_brief_document():
     meta_items = [
         ("DOCUMENT TYPE", "Executive Brief & Hand-off"),
         ("TARGET AUDIENCE", "Hero Leadership & IT Teams"),
-        ("CORE ENGINE", "Google ADK & Gemini 2.5"),
-        ("DISTRIBUTION", "Customer Distribution Package")
+        ("CORE AI PLATFORM", "Vertex AI & Gemini Enterprise"),
+        ("PUBLIC GITHUB REPO", "hero-vida-intelligence-agent")
     ]
     for idx, (label, val) in enumerate(meta_items):
         cell = meta_table.cell(0, idx)
@@ -600,7 +600,25 @@ def build_executive_brief_document():
     add_styled_heading(doc, "4. How Hero MotoCorp Can Deploy This Agent", level=1, color_rgb=(211, 47, 47))
 
     p_dep = doc.add_paragraph()
-    p_dep.add_run("The agent has been engineered for immediate, zero-friction adoption across Hero MotoCorp's technical infrastructure. Depending on the intended audience and security requirements, Hero can choose from three deployment topologies:")
+    p_dep.add_run("The agent has been engineered for immediate, zero-friction adoption across Hero MotoCorp's technical infrastructure. Hero's IT and cloud engineering teams can deploy the multi-agent system directly into Hero's Google Cloud environment in under 5 minutes.")
+
+    # Developer Quickstart Card
+    add_code_card(
+        doc,
+        title="Hero IT Quickstart (Deploy in 3 Commands):",
+        code_lines=[
+            "# Step 1: Clone the official public customer repository",
+            "git clone https://github.com/zuhaibp656/hero-vida-intelligence-agent.git",
+            "cd hero-vida-intelligence-agent",
+            "",
+            "# Step 2: Authenticate with Hero MotoCorp's Google Cloud account",
+            "gcloud auth login",
+            "gcloud auth application-default login",
+            "",
+            "# Step 3: Run the automated 1-click deployment script",
+            "./deploy.sh"
+        ]
+    )
 
     deploy_topologies = [
         ("Option A: Vertex AI Agent Engine & Gemini Enterprise (Recommended — Managed Serverless)",
@@ -608,7 +626,7 @@ def build_executive_brief_document():
          "• Business Advantages: Serverless auto-scaling, zero virtual machine management, built-in session state memory, and multi-channel access (Google Cloud Console Playground + Gemini Enterprise chat).\n"
          "• Deployment Process: 1-click deployment using the included deploy.sh script or adk deploy agent_engine.\n"
          "• Gemini Enterprise Integration: Pre-configured with GOOGLE_GENAI_USE_ENTERPRISE=1 and --gemini_enterprise_app_name=agent. Hero IT links the Reasoning Engine resource (projects/<PROJECT_ID>/locations/<REGION>/reasoningEngines/<ENGINE_ID>) in Vertex AI Agent Space / Gemini Enterprise under 'Connected Agents'.\n"
-         "• Enterprise User Access: Hero sales directors and commercial teams can query the agent directly inside Gemini Enterprise chat via @hero-vida-agent to receive live on-road pricing and 1-click Cloud Storage CSV downloads.\n"
+         "• Enterprise User Access: Hero sales directors, territory managers, and commercial teams can query the agent directly inside Gemini Enterprise chat via @hero-vida-agent to receive live on-road pricing and 1-click Cloud Storage CSV downloads.\n"
          "• Prerequisites: A Google Cloud Project (e.g. hero-digital-ai) with roles/aiplatform.user and roles/storage.objectAdmin."),
 
         ("Option B: Google Cloud Run (Containerized Microservice for Private VPCs)",
@@ -700,20 +718,23 @@ def build_executive_brief_document():
     p_ho.add_run("To transition this solution to Hero MotoCorp's cloud engineering and product teams, share the following repository package and resources:")
 
     resources = [
-        ("Technical Architecture & API Reference (README.md)",
-         "Comprehensive technical documentation including sequence diagrams, parameter specifications, subsidy formulas, and REST API examples. Located in repository root."),
-
-        ("Automated 1-Click Deployment Script (deploy.sh)",
-         "Automated shell script that authenticates, prompts for Hero's target Google Cloud Project ID and region, and provisions or updates the Agent Engine instance seamlessly."),
-
-        ("Automated Test Suite (tests/)",
-         "14 automated unit and integration tests verifying real-time web crawlers, subsidy calculations, slang resolvers, and CSV Cloud Storage generation. Command: PYTHONPATH=. ./venv/bin/pytest tests/ -v (All 14 tests passing)."),
-
         ("Official Public Code Repository (GitHub)",
          "Complete high-code Python multi-agent system built with Google ADK:\nhttps://github.com/zuhaibp656/hero-vida-intelligence-agent"),
 
+        ("Technical Architecture & API Reference (README.md)",
+         "Comprehensive technical documentation including sequence diagrams, parameter specifications, subsidy formulas, and Gemini Enterprise configuration. Located in repository root."),
+
+        ("Automated 1-Click Deployment Script (deploy.sh)",
+         "Automated shell script that authenticates, prompts for Hero's target Google Cloud Project ID and region, and provisions the Agent Platform instance with Gemini Enterprise support."),
+
+        ("Automated Test Suite (tests/)",
+         "14 automated unit and integration tests verifying real-time web crawlers, subsidy calculations, slang resolvers, and CSV Cloud Storage generation. Command: PYTHONPATH=. ./venv/bin/pytest tests/ -v (100% passing)."),
+
+        ("Gemini Enterprise & Agent Space Integration",
+         "Once registered under Connected Agents in Vertex AI Agent Space, Hero commercial leadership and sales teams can query @hero-vida-agent directly inside enterprise chat."),
+
         ("Google Cloud Console Vertex AI Playground",
-         "Once deployed into Hero's Google Cloud project, the interactive web playground is immediately accessible to business users at: https://console.cloud.google.com/vertex-ai/agents/agent-engines?project=<YOUR_HERO_GCP_PROJECT>"),
+         "Interactive browser test playground accessible immediately upon deployment at: https://console.cloud.google.com/vertex-ai/agents/agent-engines?project=<YOUR_HERO_GCP_PROJECT>"),
 
         ("Google Cloud Storage Reports Bucket",
          "Automated CSV exports are stored in Hero's private bucket at: gs://<YOUR_HERO_GCP_PROJECT>-hero-vida-reports/reports/ with direct 1-click console download links.")
