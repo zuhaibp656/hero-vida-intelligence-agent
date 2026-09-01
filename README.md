@@ -2,6 +2,8 @@
 
 An enterprise-grade, high-code multi-agent intelligence platform built with **Google ADK (`google.adk`)** for **Gemini Enterprise** and **Google Cloud Vertex AI Agent Platform (Reasoning Engine)**.
 
+**Official Public Repository:** [https://github.com/zuhaibp656/hero-vida-intelligence-agent](https://github.com/zuhaibp656/hero-vida-intelligence-agent)
+
 ---
 
 ## 📑 Table of Contents

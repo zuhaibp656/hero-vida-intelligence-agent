@@ -709,8 +709,8 @@ def build_executive_brief_document():
         ("Automated Test Suite (tests/)",
          "14 automated unit and integration tests verifying real-time web crawlers, subsidy calculations, slang resolvers, and CSV Cloud Storage generation. Command: PYTHONPATH=. ./venv/bin/pytest tests/ -v (All 14 tests passing)."),
 
-        ("Code Repository Package",
-         "Complete high-code Python repository built with Google ADK. Shareable via the customer-share branch with clean configuration templates and zero hardcoded personal IDs."),
+        ("Official Public Code Repository (GitHub)",
+         "Complete high-code Python multi-agent system built with Google ADK:\nhttps://github.com/zuhaibp656/hero-vida-intelligence-agent"),
 
         ("Google Cloud Console Vertex AI Playground",
          "Once deployed into Hero's Google Cloud project, the interactive web playground is immediately accessible to business users at: https://console.cloud.google.com/vertex-ai/agents/agent-engines?project=<YOUR_HERO_GCP_PROJECT>"),
