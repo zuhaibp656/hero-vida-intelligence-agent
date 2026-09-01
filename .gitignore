@@ -8,3 +8,5 @@ agent_tmp*/
 reports/
 agent/sandbox_data/csv/
 docs_assets/
+.adk/
+*.db
