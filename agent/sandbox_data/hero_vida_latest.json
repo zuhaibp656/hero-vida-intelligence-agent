@@ -1,0 +1,96 @@
+{
+  "oem": "Hero VIDA",
+  "timestamp": 1788181872,
+  "timestamp_str": "2026-08-31 18:41:12",
+  "data": {
+    "oem": "Hero VIDA",
+    "city": "Delhi, Bengaluru",
+    "models": [
+      {
+        "oem": "Hero VIDA",
+        "model": "Hero VIDA VX2 Plus 4.4 kwh",
+        "battery_kwh": 4.4,
+        "range_km": 187,
+        "certified_range": "187 km",
+        "base_price": 160990.0,
+        "effective_price": 118000.0,
+        "top_speed": "90 kmph",
+        "active_offers": "• ₹42,990 Official In-Portal Discount & State Subsidies",
+        "is_vida": true,
+        "city": "Delhi",
+        "source_url": "https://www.vidaworld.com"
+      },
+      {
+        "oem": "Hero VIDA",
+        "model": "Hero VIDA VX2 PLUS",
+        "battery_kwh": 3.4,
+        "range_km": 142,
+        "certified_range": "142 km",
+        "base_price": 140990.0,
+        "effective_price": 101500.0,
+        "top_speed": "80 kmph",
+        "active_offers": "• ₹39,490 Official In-Portal Discount & State Subsidies",
+        "is_vida": true,
+        "city": "Delhi",
+        "source_url": "https://www.vidaworld.com"
+      },
+      {
+        "oem": "Hero VIDA",
+        "model": "Hero VIDA V2 PRO",
+        "battery_kwh": 3.9,
+        "range_km": 165,
+        "certified_range": "165 km",
+        "base_price": 155000.0,
+        "effective_price": 120000.0,
+        "top_speed": "90 kmph",
+        "active_offers": "• ₹35,000 Official In-Portal Discount & State Subsidies",
+        "is_vida": true,
+        "city": "Delhi",
+        "source_url": "https://www.vidaworld.com"
+      },
+      {
+        "oem": "Hero VIDA",
+        "model": "Hero VIDA VX2 Plus 4.4 kwh",
+        "battery_kwh": 4.4,
+        "range_km": 187,
+        "certified_range": "187 km",
+        "base_price": 160990.0,
+        "effective_price": 148000.0,
+        "top_speed": "90 kmph",
+        "active_offers": "• ₹12,990 Official In-Portal Discount & State Subsidies",
+        "is_vida": true,
+        "city": "Bengaluru",
+        "source_url": "https://www.vidaworld.com"
+      },
+      {
+        "oem": "Hero VIDA",
+        "model": "Hero VIDA VX2 PLUS",
+        "battery_kwh": 3.4,
+        "range_km": 142,
+        "certified_range": "142 km",
+        "base_price": 140990.0,
+        "effective_price": 128000.0,
+        "top_speed": "80 kmph",
+        "active_offers": "• ₹12,990 Official In-Portal Discount & State Subsidies",
+        "is_vida": true,
+        "city": "Bengaluru",
+        "source_url": "https://www.vidaworld.com"
+      },
+      {
+        "oem": "Hero VIDA",
+        "model": "Hero VIDA V2 PRO",
+        "battery_kwh": 3.9,
+        "range_km": 165,
+        "certified_range": "165 km",
+        "base_price": 155000.0,
+        "effective_price": 150000.0,
+        "top_speed": "90 kmph",
+        "active_offers": "• ₹5,000 Official In-Portal Discount & State Subsidies",
+        "is_vida": true,
+        "city": "Bengaluru",
+        "source_url": "https://www.vidaworld.com"
+      }
+    ],
+    "raw_source": "https://www.vidaworld.com (Live JSON Master Stream)"
+  }
+}

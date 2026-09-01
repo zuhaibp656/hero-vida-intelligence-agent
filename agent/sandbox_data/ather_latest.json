@@ -1,0 +1,66 @@
+{
+  "oem": "Ather",
+  "timestamp": 1788181859,
+  "timestamp_str": "2026-08-31 18:40:59",
+  "data": {
+    "models": [
+      {
+        "oem": "Ather",
+        "model": "Ather Rizta S",
+        "battery_kwh": 3.7,
+        "range_km": 160,
+        "certified_range": "160 km",
+        "base_price": 130998.0,
+        "effective_price": 146004.0,
+        "top_speed": "80 km/h",
+        "active_offers": "• ₹3999 Introductory Offer",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com/rizta"
+      },
+      {
+        "oem": "Ather",
+        "model": "Ather Rizta Z",
+        "battery_kwh": 3.7,
+        "range_km": 160,
+        "certified_range": "160 km",
+        "base_price": 146498.0,
+        "effective_price": 168795.0,
+        "top_speed": "80 km/h",
+        "active_offers": "• ₹4499 Introductory Offer",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com/rizta"
+      },
+      {
+        "oem": "Ather",
+        "model": "Ather Rizta S",
+        "battery_kwh": 3.7,
+        "range_km": 160,
+        "certified_range": "160 km",
+        "base_price": 153998.0,
+        "effective_price": 170437.0,
+        "top_speed": "80 km/h",
+        "active_offers": "• ₹3999 Introductory Offer",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com/rizta"
+      },
+      {
+        "oem": "Ather",
+        "model": "Ather Rizta Z",
+        "battery_kwh": 3.7,
+        "range_km": 160,
+        "certified_range": "160 km",
+        "base_price": 166498.0,
+        "effective_price": 190170.0,
+        "top_speed": "80 km/h",
+        "active_offers": "• ₹4499 Introductory Offer",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com/rizta"
+      }
+    ],
+    "source_url": "https://www.atherenergy.com"
+  }
+}

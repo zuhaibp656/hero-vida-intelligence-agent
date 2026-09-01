@@ -1,0 +1,17 @@
+{
+  "oem": "Test Brand",
+  "timestamp": 1788181842,
+  "timestamp_str": "2026-08-31 18:40:42",
+  "data": {
+    "models": [
+      {
+        "oem": "Test Brand",
+        "model": "Test Model 3.0",
+        "battery_kwh": 3.0,
+        "range_km": 120,
+        "base_price": 110000.0,
+        "is_vida": false
+      }
+    ]
+  }
+}

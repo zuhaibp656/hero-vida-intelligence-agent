@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+.pytest_cache/
+agent_tmp*/
+reports/
+agent/sandbox_data/csv/
+docs_assets/
+.adk/
+**/.adk/
+*.db
