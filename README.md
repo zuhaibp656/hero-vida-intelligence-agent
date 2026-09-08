@@ -19,6 +19,7 @@ An enterprise-grade, high-code multi-agent intelligence platform built with **Go
 7. [A2A (Agent-to-Agent) Sharing & Integration](#7-a2a-agent-to-agent-sharing--integration)
 8. [Configuration & Environment Variables](#8-configuration--environment-variables)
 9. [Automated Verification & Test Suite](#9-automated-verification--test-suite)
+10. [Token Consumption, Cost Modeling & Volume Projections](#10-token-consumption-cost-modeling--volume-projections)
 
 ---
 
@@ -463,3 +464,33 @@ PYTHONPATH=. ./venv/bin/pytest tests/ -v
 - `test_crawler_execution`: Tests live single-city crawl execution.
 - `test_csv_generation_and_storage_links`: Validates CSV generation, file persistence, Google Cloud Console download link format, and raw CSV preview block.
 - `test_same_company_different_models_different_cities`: Tests matrix searches comparing multiple models of the same OEM across multiple cities.
+
+---
+
+## 10. Token Consumption, Cost Modeling & Volume Projections
+
+For full empirical analysis and raw CSV data, see [`docs/TOKEN_USAGE_AND_COST_GUIDE.md`](docs/TOKEN_USAGE_AND_COST_GUIDE.md) and [`docs/token_usage_and_cost_analysis.csv`](docs/token_usage_and_cost_analysis.csv).
+
+### Vertex AI Pricing Reference (Standard Tier)
+- **Gemini 2.5 Pro** (Root Orchestrator, Subsidy Engine, Strategic Report): **$1.25 / 1M Input** | **$5.00 / 1M Output**
+- **Gemini 2.5 Flash** (Crawler Sub-Agent & DOM Parsing): **$0.15 / 1M Input** | **$0.60 / 1M Output**
+*(FX rate applied: 1 USD = ₹86.50 INR)*
+
+### Empirical Complexity & Cost Breakdown
+
+| Complexity Tier | Archetype User Query | Input Tokens | Output Tokens | Total Tokens | Gemini 2.5 Pro Cost (USD) | Gemini 2.5 Pro Cost (INR) | Typical Latency |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Tier 1: Simple Single-Variant** | *"What is the on-road price of Hero VIDA V2 Pro in Delhi?"* | 2,500 | 350 | 2,850 | **$0.00488** | **₹0.42** | ~1.4s |
+| **Tier 2: Moderate 1v1 Compare** | *"Compare Ather Rizta with Hero VIDA in Bengaluru"* | 3,350 | 600 | 3,950 | **$0.00719** | **₹0.62** | ~2.1s |
+| **Tier 3: Complex Multi-City Benchmark** | *"Benchmark Hero VIDA against Ather and Chetak in Delhi, Bengaluru, Pune"* | 6,800 | 1,100 | 7,900 | **$0.01400** | **₹1.21** | ~3.8s |
+| **Tier 4: Multi-Turn Executive Session** | *Full 4-turn follow-up dialogue adding cities, battery specs, subsidies* | 14,500 | 2,400 | 16,900 | **$0.03013** | **₹2.61** | ~4.5s |
+
+### Enterprise Monthly Scaling Projections (Blended Avg: $0.00958 / ₹0.83 per query)
+
+| Monthly Query Volume | Est. Monthly Tokens | Projected Vertex AI Cost (USD) | Projected Cost (INR) |
+| :--- | :---: | :---: | :---: |
+| **1,000 Queries / Month** | ~5.3M Tokens | **$9.58** | **₹828** |
+| **5,000 Queries / Month** | ~26.6M Tokens | **$47.89** | **₹4,142** |
+| **20,000 Queries / Month** | ~106.5M Tokens | **$191.57** | **₹16,570** |
+| **50,000 Queries / Month** | ~266.3M Tokens | **$478.91** | **₹41,426** |
+
