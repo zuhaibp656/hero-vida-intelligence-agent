@@ -246,11 +246,24 @@ flowchart LR
    - `roles/storage.objectAdmin` (to create/upload reports to GCS bucket)
    - `roles/cloudbuild.builds.editor` (for automated container building)
 
-3. **Deploy via 1-Click Script:**
-   ```bash
-   ./deploy.sh
-   ```
-   *Prompts for Project ID, Region (`us-central1`), and Agent Engine ID (`new` for fresh instance, or existing ID for in-place update).*
+3. **Automated & Continuous Deployment (Zero-Click Updates):**
+   - **Auto-Deploy on Git Commit:**
+     A git post-commit hook automatically deploys updates to the Reasoning Engine whenever changes are committed in the `agent/` folder.
+   - **Continuous File Watcher (Hot-Reload / Watch Mode):**
+     Run the watcher in the background during active development:
+     ```bash
+     python3 scripts/watch_and_deploy.py
+     ```
+     Any file saved in `agent/` will debounce and deploy automatically to the active Agent Engine instance.
+   - **Non-Interactive Automated Flag:**
+     ```bash
+     ./deploy.sh --auto --id=3838207625833480192
+     ```
+   - **Interactive 1-Click Script:**
+     ```bash
+     ./deploy.sh
+     ```
+     *Prompts for Project ID, Region (`us-central1`), and Agent Engine ID (`new` for fresh instance, or existing ID for in-place update).*
 
 4. **Direct ADK CLI Command (for CI/CD Pipelines):**
    ```bash
@@ -263,6 +276,7 @@ flowchart LR
    ```
 
 5. **Interact via Cloud Console Playground:**
+
    ```
    https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/<AGENT_ENGINE_ID>/playground?project=<CUSTOMER_PROJECT_ID>
    ```
