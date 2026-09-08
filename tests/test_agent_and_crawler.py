@@ -222,4 +222,23 @@ def test_same_company_different_models_different_cities():
     assert "Cloud Storage Console" in output
     assert "```csv" in output
 
+def test_cross_brand_multi_city_crawler():
+    output = run_crawler_tool("Compare Ather and Chetak with Hero VIDA in Delhi and Bengaluru")
+    assert "Hero VIDA" in output
+    assert "Ather" in output
+    assert "Chetak" in output or "Bajaj Chetak" in output
+    assert "Delhi" in output
+    assert "Bengaluru" in output
+    assert "gs://zuhaibp-ai-hero-vida-reports" in output
+
+def test_pricing_sanitization():
+    from agent.tools.web_crawler import live_crawl_ola, live_crawl_river
+    ola = live_crawl_ola("Bengaluru")
+    for m in ola:
+        assert m["base_price"] >= 50000
+
+    river = live_crawl_river("Bengaluru")
+    for m in river:
+        assert m["base_price"] >= 90000
+
 

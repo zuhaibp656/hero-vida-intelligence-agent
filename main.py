@@ -62,16 +62,22 @@ def render_table(data_json: str):
 
 def get_auth_headers():
     try:
-        from google.auth.transport.requests import Request
-        from google.auth import default
-        creds, _ = default()
-        creds.refresh(Request())
-        return {
-            "Authorization": f"Bearer {creds.token}",
-            "Content-Type": "application/json"
-        }
-    except Exception as e:
-        return None
+        from agent.tools.storage_manager import get_gcp_credentials
+        creds = get_gcp_credentials()
+        if creds:
+            if hasattr(creds, "token") and creds.token:
+                token = creds.token
+            else:
+                from google.auth.transport.requests import Request
+                creds.refresh(Request())
+                token = creds.token
+            return {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+    except Exception:
+        pass
+    return None
 
 async def interactive_chat():
     session_id = str(uuid.uuid4())
