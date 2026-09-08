@@ -11,16 +11,39 @@ from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Base directories
+import tempfile
+
+# Base directories with automatic container / tmp fallback
 BASE_AGENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKSPACE_DIR = os.path.dirname(BASE_AGENT_DIR)
-REPORTS_DIR = os.path.join(WORKSPACE_DIR, "reports")
-SANDBOX_CSV_DIR = os.path.join(BASE_AGENT_DIR, "sandbox_data", "csv")
+
+
+def _get_writable_dir(preferred_path: str, fallback_subfolder: str) -> str:
+    """Returns preferred_path if writable; otherwise falls back to /tmp/<fallback_subfolder>."""
+    try:
+        os.makedirs(preferred_path, exist_ok=True)
+        # Test write permission
+        test_file = os.path.join(preferred_path, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("ok")
+        os.remove(test_file)
+        return preferred_path
+    except (PermissionError, OSError):
+        fallback_path = os.path.join(tempfile.gettempdir(), fallback_subfolder)
+        os.makedirs(fallback_path, exist_ok=True)
+        return fallback_path
+
+
+REPORTS_DIR = _get_writable_dir(os.path.join(WORKSPACE_DIR, "reports"), "hero_vida_reports")
+SANDBOX_CSV_DIR = _get_writable_dir(os.path.join(BASE_AGENT_DIR, "sandbox_data", "csv"), "hero_vida_sandbox_csv")
+
 
 def ensure_storage_dirs():
-    """Ensures local storage directories exist."""
-    os.makedirs(REPORTS_DIR, exist_ok=True)
-    os.makedirs(SANDBOX_CSV_DIR, exist_ok=True)
+    """Ensures local storage directories exist safely across any environment."""
+    global REPORTS_DIR, SANDBOX_CSV_DIR
+    REPORTS_DIR = _get_writable_dir(REPORTS_DIR, "hero_vida_reports")
+    SANDBOX_CSV_DIR = _get_writable_dir(SANDBOX_CSV_DIR, "hero_vida_sandbox_csv")
+
 
 def generate_csv_string(records: List[Dict[str, Any]]) -> str:
     """

@@ -1,7 +1,7 @@
 {
   "oem": "Chetak",
-  "timestamp": 1788862504,
-  "timestamp_str": "2026-09-08 15:45:04",
+  "timestamp": 1788862950,
+  "timestamp_str": "2026-09-08 15:52:30",
   "data": {
     "models": [
       {
@@ -286,20 +286,6 @@
       },
       {
         "oem": "Bajaj Chetak",
-        "model": "Chetak C3001",
-        "battery_kwh": 3.0,
-        "range_km": 131,
-        "certified_range": "131 km",
-        "base_price": 114270.0,
-        "effective_price": 114270.0,
-        "top_speed": "70 km/h",
-        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
-        "is_vida": false,
-        "city": "Delhi",
-        "source_url": "https://www.chetak.com/series-30/chetak-c3001"
-      },
-      {
-        "oem": "Bajaj Chetak",
         "model": "Chetak C3502",
         "battery_kwh": 3.5,
         "range_km": 153,
@@ -311,6 +297,20 @@
         "is_vida": false,
         "city": "Delhi",
         "source_url": "https://www.chetak.com/series-35/chetak-c3502"
+      },
+      {
+        "oem": "Bajaj Chetak",
+        "model": "Chetak C3001",
+        "battery_kwh": 3.0,
+        "range_km": 131,
+        "certified_range": "131 km",
+        "base_price": 114270.0,
+        "effective_price": 114270.0,
+        "top_speed": "70 km/h",
+        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
+        "is_vida": false,
+        "city": "Delhi",
+        "source_url": "https://www.chetak.com/series-30/chetak-c3001"
       },
       {
         "oem": "Bajaj Chetak",
@@ -342,20 +342,6 @@
       },
       {
         "oem": "Bajaj Chetak",
-        "model": "Chetak C3001",
-        "battery_kwh": 3.0,
-        "range_km": 131,
-        "certified_range": "131 km",
-        "base_price": 114270.0,
-        "effective_price": 114270.0,
-        "top_speed": "70 km/h",
-        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
-        "is_vida": false,
-        "city": "Bengaluru",
-        "source_url": "https://www.chetak.com/series-30/chetak-c3001"
-      },
-      {
-        "oem": "Bajaj Chetak",
         "model": "Chetak C3502",
         "battery_kwh": 3.5,
         "range_km": 153,
@@ -367,6 +353,20 @@
         "is_vida": false,
         "city": "Bengaluru",
         "source_url": "https://www.chetak.com/series-35/chetak-c3502"
+      },
+      {
+        "oem": "Bajaj Chetak",
+        "model": "Chetak C3001",
+        "battery_kwh": 3.0,
+        "range_km": 131,
+        "certified_range": "131 km",
+        "base_price": 114270.0,
+        "effective_price": 114270.0,
+        "top_speed": "70 km/h",
+        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.chetak.com/series-30/chetak-c3001"
       },
       {
         "oem": "Bajaj Chetak",

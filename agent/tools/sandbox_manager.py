@@ -6,12 +6,24 @@ from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-SANDBOX_BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sandbox_data")
+import tempfile
+
+DEFAULT_SANDBOX_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sandbox_data")
 
 def get_sandbox_dir() -> str:
-    """Ensures sandbox directory exists and returns its absolute path."""
-    os.makedirs(SANDBOX_BASE_DIR, exist_ok=True)
-    return SANDBOX_BASE_DIR
+    """Ensures sandbox directory exists and returns its absolute path with /tmp fallback for container runtimes."""
+    try:
+        os.makedirs(DEFAULT_SANDBOX_DIR, exist_ok=True)
+        test_file = os.path.join(DEFAULT_SANDBOX_DIR, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("ok")
+        os.remove(test_file)
+        return DEFAULT_SANDBOX_DIR
+    except (PermissionError, OSError):
+        fallback = os.path.join(tempfile.gettempdir(), "hero_vida_sandbox_data")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
+
 
 def save_to_sandbox(oem_name: str, payload: Dict[str, Any], raw_dom: Optional[str] = None) -> str:
     """
