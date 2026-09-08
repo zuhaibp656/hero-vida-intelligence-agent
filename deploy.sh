@@ -46,12 +46,35 @@ read -p "Deploy new instance or update existing? Type 'new' or enter existing Ag
 ENGINE_CHOICE=${ENGINE_CHOICE:-new}
 
 echo ""
-echo "Deploying Agent to Vertex AI Agent Engine..."
-echo "Project: $PROJECT_ID | Region: $REGION"
+echo "Preparing deployment environment..."
 
-# Set up environment variables
+# 1. Ensure Python virtual environment and dependencies
+if [ ! -f "./venv/bin/adk" ]; then
+  echo "Setting up Python virtual environment and installing dependencies..."
+  python3 -m venv venv
+  ./venv/bin/pip install --upgrade pip --quiet
+  ./venv/bin/pip install -r requirements.txt --quiet
+fi
+
+# 2. Enable Required Google Cloud APIs
+echo "Enabling Vertex AI and Cloud Storage APIs in project $PROJECT_ID..."
+gcloud services enable aiplatform.googleapis.com storage.googleapis.com --project="$PROJECT_ID" 2>/dev/null || true
+
+# 3. Create or Verify Reports Cloud Storage Bucket
+BUCKET_NAME="${PROJECT_ID}-hero-vida-reports"
+echo "Verifying Cloud Storage bucket: gs://$BUCKET_NAME ..."
+if ! gcloud storage buckets describe "gs://$BUCKET_NAME" --project="$PROJECT_ID" >/dev/null 2>&1; then
+  echo "Provisioning bucket gs://$BUCKET_NAME in region $REGION..."
+  gcloud storage buckets create "gs://$BUCKET_NAME" --project="$PROJECT_ID" --location="$REGION" --uniform-bucket-level-access 2>/dev/null || true
+  echo "✅ Bucket gs://$BUCKET_NAME provisioned successfully."
+else
+  echo "✅ Bucket gs://$BUCKET_NAME is verified and ready."
+fi
+
+# 4. Set up environment variables
 export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
 export GOOGLE_CLOUD_LOCATION="$REGION"
+export GCS_BUCKET_NAME="$BUCKET_NAME"
 export GOOGLE_GENAI_USE_ENTERPRISE=1
 export PYTHONPATH="$DIR"
 
@@ -59,6 +82,8 @@ export PYTHONPATH="$DIR"
 ./venv/bin/adk telemetry disable 2>/dev/null || true
 
 echo "Configured for Google Cloud Agent Platform & Gemini Enterprise (GOOGLE_GENAI_USE_ENTERPRISE=1)..."
+echo "Deploying Agent to Vertex AI Agent Engine..."
+echo "Project: $PROJECT_ID | Region: $REGION | Bucket: $BUCKET_NAME"
 
 if [ "$ENGINE_CHOICE" = "new" ] || [ -z "$ENGINE_CHOICE" ]; then
   echo "Action: Provisioning a fresh Agent Engine instance in $REGION..."
