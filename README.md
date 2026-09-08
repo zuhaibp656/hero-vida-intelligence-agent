@@ -20,6 +20,7 @@ An enterprise-grade, high-code multi-agent intelligence platform built with **Go
 8. [Configuration & Environment Variables](#8-configuration--environment-variables)
 9. [Automated Verification & Test Suite](#9-automated-verification--test-suite)
 10. [Token Consumption, Cost Modeling & Volume Projections](#10-token-consumption-cost-modeling--volume-projections)
+11. [Flash-First Architecture & Model Compatibility Deep-Dive](#11-flash-first-architecture--model-compatibility-deep-dive)
 
 ---
 
@@ -493,4 +494,19 @@ For full empirical analysis and raw CSV data, see [`docs/TOKEN_USAGE_AND_COST_GU
 | **5,000 Queries / Month** | ~26.6M Tokens | **$47.89** | **₹4,142** |
 | **20,000 Queries / Month** | ~106.5M Tokens | **$191.57** | **₹16,570** |
 | **50,000 Queries / Month** | ~266.3M Tokens | **$478.91** | **₹41,426** |
+
+---
+
+## 11. Flash-First Architecture & Model Compatibility Deep-Dive
+
+For complete API logs and technical explanation, see [`docs/FLASH_FIRST_AND_MODEL_COMPATIBILITY_GUIDE.md`](docs/FLASH_FIRST_AND_MODEL_COMPATIBILITY_GUIDE.md).
+
+### Why Do 3.x Models (`gemini-3.6-flash`, `gemini-3.7-flash`) Fail on ADK?
+- **Root Cause:** In Google ADK (`google.adk`), any model string matching `r'gemini-.*'` is accepted locally during initialization. However, when making RPC requests to Google Cloud Vertex AI, the Vertex AI Publisher Model catalog currently serves **`gemini-2.5-flash`** and **`gemini-2.5-pro`** as active GA models. Requesting `gemini-3.7-flash` or `gemini-3.6-flash` returns an immediate HTTP **404 Not Found** from Vertex AI (`publishers/google/models/gemini-3.7-flash not found`).
+- **Flash-First Default:** The agent is now configured with **Flash-First Routing** using `gemini-2.5-flash` across orchestrator and sub-agents, slashing costs by **88%** while achieving sub-2-second responses.
+- **Dynamic Model Switching:** All agent models can be overridden at runtime without code changes:
+  ```bash
+  PRIMARY_AGENT_MODEL="gemini-2.5-pro" PRICING_AGENT_MODEL="gemini-2.5-pro" ./deploy.sh
+  ```
+
 

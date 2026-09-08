@@ -82,9 +82,11 @@ def compare_competitor_with_vida(competitor_name: str = "ALL", city_name: str = 
     records = calculate_dynamic_benchmark(crawled_models_json=models, city_query=city_name)
     return json.dumps(records, indent=2)
 
+PRICING_AGENT_MODEL = os.environ.get("PRICING_AGENT_MODEL", os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"))
+
 pricing_agent = Agent(
     name="pricing_subagent",
-    model="gemini-2.5-pro",
+    model=PRICING_AGENT_MODEL,
     description="Dynamic price benchmarking agent that takes live crawled model data from sandbox and computes city tax & subsidies across 15+ Indian cities.",
     instruction="""
     You are the Price Benchmarking Sub-Agent.
@@ -94,3 +96,4 @@ pricing_agent = Agent(
     """,
     tools=[compute_city_ev_pricing]
 )
+

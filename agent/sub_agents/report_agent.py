@@ -8,9 +8,11 @@ if parent_dir not in sys.path:
 from tools.storage_manager import export_csv_report_tool
 from google.adk.agents.llm_agent import Agent
 
+REPORT_AGENT_MODEL = os.environ.get("REPORT_AGENT_MODEL", os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"))
+
 report_agent = Agent(
     name="report_subagent",
-    model="gemini-2.5-pro",
+    model=REPORT_AGENT_MODEL,
     description="Synthesizes live crawled EV specs, subsidies, and dynamic pricing into executive markdown comparison tables, bold green final on-road prices, sales enablement takeaways, and CSV Cloud Storage download links.",
     instruction="""
     You are the Report Generation Sub-Agent for Hero MotoCorp sales representatives and executives.
@@ -23,6 +25,7 @@ report_agent = Agent(
     4. ALWAYS include the **📥 Verified CSV Export & Cloud Storage Download** section provided by the tool output, including the direct Google Cloud Console link, direct download URL, gs:// URI, and the raw CSV dataset block.
 
     MANDATED REPORT FORMAT:
+
 
     ---
 

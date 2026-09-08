@@ -57,9 +57,12 @@ You are an intelligent, conversational, and deeply analytical consultant for Her
      * The complete raw CSV block (````csv ... ````) inside `<details>` so users can directly copy the data from the console.
 """
 
+# Model configuration (Flash-first default for optimal cost and ultra-low latency; customizable via environment)
+PRIMARY_AGENT_MODEL = os.environ.get("PRIMARY_AGENT_MODEL", os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"))
+
 root_agent = Agent(
     name="hero_vida_main_agent",
-    model="gemini-2.5-pro",
+    model=PRIMARY_AGENT_MODEL,
     description="Autonomous AI consultant to benchmark EV two-wheelers, extract live official specs from vidaworld.com and competitor sites in real time, and generate accurate pricing reports with Cloud Storage CSV exports.",
     instruction=MAIN_AGENT_INSTRUCTION,
     tools=[run_crawler_tool, compute_city_ev_pricing, export_csv_report_tool],
@@ -69,3 +72,4 @@ root_agent = Agent(
         report_agent
     ]
 )
+
