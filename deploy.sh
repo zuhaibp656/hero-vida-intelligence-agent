@@ -50,12 +50,18 @@ for arg in "$@"; do
 done
 
 # Detect Current Project
-DETECTED_PROJECT=$(gcloud config get-value project 2>/dev/null | grep -v "unset" || echo "zuhaibp-ai")
+DETECTED_PROJECT=$(gcloud config get-value project 2>/dev/null | grep -v "unset" || echo "")
 
 if [ "$AUTO_MODE" = "1" ]; then
-  PROJECT_ID=${INPUT_PROJECT_OVERRIDE:-${GOOGLE_CLOUD_PROJECT:-$DETECTED_PROJECT}}
+  PROJECT_ID=${INPUT_PROJECT_OVERRIDE:-${GOOGLE_CLOUD_PROJECT:-${DETECTED_PROJECT:-"zuhaibp-ai"}}}
   REGION=${INPUT_REGION_OVERRIDE:-${GOOGLE_CLOUD_LOCATION:-"us-central1"}}
-  ENGINE_CHOICE=${ENGINE_CHOICE:-${AGENT_ENGINE_ID:-"3838207625833480192"}}
+  if [ -z "$ENGINE_CHOICE" ]; then
+    if [ "$PROJECT_ID" = "zuhaibp-ai" ] || [ "$PROJECT_ID" = "632239123109" ]; then
+      ENGINE_CHOICE="3838207625833480192"
+    else
+      ENGINE_CHOICE="new"
+    fi
+  fi
   echo "🤖 Automated Mode Active:"
   echo "   Project ID: $PROJECT_ID"
   echo "   Region:     $REGION"
@@ -72,13 +78,21 @@ else
     PROJECT_ID=${INPUT_PROJECT:-$DETECTED_PROJECT}
   else
     read -p "Enter Target Google Cloud Project ID: " PROJECT_ID
+    while [ -z "$PROJECT_ID" ]; do
+      read -p "Project ID cannot be empty. Enter Target Google Cloud Project ID: " PROJECT_ID
+    done
   fi
 
   read -p "Enter GCP Region [default: us-central1]: " INPUT_REGION
   REGION=${INPUT_REGION:-us-central1}
 
-  read -p "Deploy new instance or update existing? Type 'new' or enter existing Agent Engine ID [default: 3838207625833480192]: " INPUT_CHOICE
-  ENGINE_CHOICE=${INPUT_CHOICE:-"3838207625833480192"}
+  DEFAULT_ENGINE="new"
+  if [ "$PROJECT_ID" = "zuhaibp-ai" ] || [ "$PROJECT_ID" = "632239123109" ]; then
+    DEFAULT_ENGINE="3838207625833480192"
+  fi
+
+  read -p "Deploy new instance or update existing? Type 'new' or enter existing Agent Engine ID [default: $DEFAULT_ENGINE]: " INPUT_CHOICE
+  ENGINE_CHOICE=${INPUT_CHOICE:-"$DEFAULT_ENGINE"}
 fi
 
 echo ""
