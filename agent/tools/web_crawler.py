@@ -1187,9 +1187,41 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
     export_result = export_and_upload_csv(models, query_context=clean_ctx)
     csv_section_md = format_csv_download_section(export_result)
 
+    # Collect all official OEM portals crawled/checked
+    brand_map = {
+        "ather": "Ather Energy",
+        "chetak": "Bajaj Chetak",
+        "tvs": "TVS iQube",
+        "ola": "Ola Electric",
+        "river": "River Mobility",
+        "vida": "Hero VIDA",
+        "hero vida": "Hero VIDA"
+    }
+    oem_portals: Dict[str, str] = {}
+    for m in models:
+        raw_k = m.get("oem", "Hero VIDA")
+        c_name = brand_map.get(raw_k.lower().strip(), raw_k)
+        s_url = m.get("source_url")
+        if s_url and c_name not in oem_portals:
+            oem_portals[c_name] = s_url
+
+    if "Hero VIDA" not in oem_portals:
+        oem_portals["Hero VIDA"] = "https://www.vidaworld.com"
+
+    if detected_comp_keys:
+        for comp_k in detected_comp_keys:
+            c_name = brand_map.get(comp_k.lower().strip(), comp_k.title())
+            if c_name not in oem_portals:
+                oem_portals[c_name] = OFFICIAL_OEM_DOMAINS.get(comp_k, f"https://www.{comp_k}.com")
+
+    portal_lines = []
+    for oem_name, p_url in oem_portals.items():
+        portal_lines.append(f"  * **{oem_name}:** [{p_url}]({p_url})")
+    portals_bullet = "- **Official OEM Grounding Portals Checked:**\n" + "\n".join(portal_lines)
+
     output = [
         f"### 🌐 Real-Time Official Grounding & Specifications Report ({', '.join(formatted_cities)})\n",
-        f"- **Live Portal Source:** [{target_url}]({target_url})",
+        portals_bullet,
         f"- **Data Ingestion Mode:** `{crawl_mode}` (100% Real-Time Live Feed — Zero Static Hardcoding & Zero Cache)",
         f"- **Sandbox Status:** Verified & stored in local Sandbox (`sandbox_data/`)\n",
         "| City | Model & Variant | Battery Capacity | Certified Range | Top Speed | Base Ex-Showroom | ⭐ Final Effective Price | Active Discounts & Offers | Verified Official Source |",

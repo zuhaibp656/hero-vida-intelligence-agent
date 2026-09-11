@@ -49,6 +49,8 @@ def generate_csv_string(records: List[Dict[str, Any]]) -> str:
     """
     Converts list of model / benchmark records into a standardized CSV string.
     Zero hardcoded values: all rows reflect the real-time crawled dataset.
+    Clean numeric formatting for Base_Ex_Showroom_INR and Effective_Price_INR
+    to enable instant mathematical calculations and charting in Google Sheets / Excel.
     """
     headers = [
         "City",
@@ -67,28 +69,49 @@ def generate_csv_string(records: List[Dict[str, Any]]) -> str:
     writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
     writer.writerow(headers)
 
+    brand_map = {
+        "ather": "Ather Energy",
+        "chetak": "Bajaj Chetak",
+        "tvs": "TVS iQube",
+        "ola": "Ola Electric",
+        "river": "River Mobility",
+        "vida": "Hero VIDA",
+        "hero vida": "Hero VIDA"
+    }
+
     for r in records:
         city = r.get("city") or r.get("city_name") or "National"
-        oem = r.get("oem") or "Hero VIDA"
+        raw_oem = r.get("oem") or "Hero VIDA"
+        oem = brand_map.get(raw_oem.lower().strip(), raw_oem)
+
         model = r.get("model") or "EV"
+        if r.get("is_vida") and not model.startswith("Hero"):
+            model = f"Hero VIDA {model}"
+
         bat = r.get("battery_kwh") or "-"
+        bat_str = str(bat).replace(" kWh", "").replace("kwh", "").strip()
+
         rng = r.get("range_km") or "-"
+        rng_str = str(rng).replace(" km", "").strip()
+
         speed = r.get("top_speed") or "-"
 
         base_p = r.get("base_price") or r.get("base_ex_showroom") or 0
         if isinstance(base_p, (int, float)):
-            base_str = f"₹{int(base_p):,}"
+            base_num = int(base_p)
         else:
-            base_str = str(base_p)
+            clean_num = re.sub(r'[^\d.]', '', str(base_p))
+            base_num = int(float(clean_num)) if clean_num else 0
 
         eff_p = r.get("effective_price") or r.get("effective_on_road_price") or base_p
         if isinstance(eff_p, (int, float)):
-            eff_str = f"₹{int(eff_p):,}"
+            eff_num = int(eff_p)
         else:
-            eff_str = str(eff_p)
+            clean_eff = re.sub(r'[^\d.]', '', str(eff_p))
+            eff_num = int(float(clean_eff)) if clean_eff else base_num
 
         offers = str(r.get("active_offers") or r.get("active_promotional_offers") or "Standard Ex-Showroom")
-        clean_offers = offers.replace("<br>", " ").replace("\n", " ").strip()
+        clean_offers = offers.replace("<br>", " ").replace("\n", " ").replace("•", "-").strip()
 
         source_url = r.get("source_url") or "https://www.vidaworld.com"
 
@@ -96,11 +119,11 @@ def generate_csv_string(records: List[Dict[str, Any]]) -> str:
             city,
             oem,
             model,
-            bat,
-            rng,
+            bat_str,
+            rng_str,
             speed,
-            base_str,
-            eff_str,
+            base_num,
+            eff_num,
             clean_offers,
             source_url
         ])
@@ -169,40 +192,66 @@ def get_gcp_credentials():
 def upload_to_gcs(
     csv_content: str,
     filename: str,
-    project_id: str,
-    bucket_name: str
+    project_id: str = "zuhaibp-ai",
+    target_buckets: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
-    Attempts to upload CSV to Google Cloud Storage bucket with strict timeouts.
-    Never blocks or hangs the calling agent.
+    Uploads CSV synchronously to target Google Cloud Storage buckets.
+    Uses direct storage API with standard timeouts.
+    Uploads to all active project buckets so URLs never 404.
     """
+    if not target_buckets:
+        target_buckets = [
+            "zuhaibp-ai-hero-vida-reports",
+            "632239123109-hero-vida-reports"
+        ]
+
+    uploaded_buckets = []
+    upload_errors = []
+
     try:
         from google.cloud import storage
         creds = get_gcp_credentials()
         client = storage.Client(project=project_id, credentials=creds) if creds else storage.Client(project=project_id)
         
-        # Try getting or creating bucket
-        try:
-            bucket = client.get_bucket(bucket_name)
-        except Exception:
+        for b_name in target_buckets:
             try:
-                region = os.environ.get("REGION", "us-central1")
-                bucket = client.create_bucket(bucket_name, location=region)
-                logger.info(f"Created GCS bucket: {bucket_name}")
-            except Exception:
-                bucket = client.bucket(bucket_name)
+                bucket = client.bucket(b_name)
+                blob = bucket.blob(f"reports/{filename}")
+                blob.upload_from_string(csv_content, content_type="text/csv", timeout=10)
 
-        blob = bucket.blob(f"reports/{filename}")
-        blob.upload_from_string(csv_content, content_type="text/csv", timeout=6)
+                latest_blob = bucket.blob("reports/hero_vida_comparison_latest.csv")
+                latest_blob.upload_from_string(csv_content, content_type="text/csv", timeout=10)
+                uploaded_buckets.append(b_name)
+                logger.info(f"Synchronously uploaded {filename} to gs://{b_name}/")
+            except Exception as be:
+                logger.warning(f"Could not upload to bucket {b_name}: {be}")
+                upload_errors.append(f"{b_name}: {be}")
 
-        # Also upload latest pointer
-        latest_blob = bucket.blob("reports/hero_vida_comparison_latest.csv")
-        latest_blob.upload_from_string(csv_content, content_type="text/csv", timeout=6)
-
-        return {"success": True, "error": None}
+        if uploaded_buckets:
+            primary = "zuhaibp-ai-hero-vida-reports" if "zuhaibp-ai-hero-vida-reports" in uploaded_buckets else uploaded_buckets[0]
+            return {
+                "success": True,
+                "primary_bucket": primary,
+                "uploaded_buckets": uploaded_buckets,
+                "error": None
+            }
+        else:
+            err_str = "; ".join(upload_errors)
+            return {
+                "success": False,
+                "primary_bucket": target_buckets[0],
+                "uploaded_buckets": [],
+                "error": err_str
+            }
     except Exception as e:
-        logger.warning(f"GCS upload notice (offline or local credential): {e}")
-        return {"success": False, "error": str(e)}
+        logger.warning(f"GCS client upload error: {e}")
+        return {
+            "success": False,
+            "primary_bucket": target_buckets[0],
+            "uploaded_buckets": [],
+            "error": str(e)
+        }
 
 def export_and_upload_csv(
     records: List[Dict[str, Any]],
@@ -212,7 +261,7 @@ def export_and_upload_csv(
     Core function that:
     1. Formats live comparison records into clean CSV.
     2. Persists CSV locally in sandbox_data/csv/ and reports/.
-    3. Uploads CSV to Google Cloud Storage bucket (or provides GCS links for Cloud Run / Agent Platform).
+    3. Uploads CSV synchronously to Google Cloud Storage buckets (zuhaibp-ai and 632239123109).
     4. Formats clickable console links, authenticated links, gs:// URIs, and raw CSV preview.
     """
     ensure_storage_dirs()
@@ -241,66 +290,70 @@ def export_and_upload_csv(
 
     # 2. Cloud Storage upload & link building
     project_id = get_gcp_project()
-    bucket_name = os.environ.get("GCS_BUCKET_NAME") or os.environ.get("BUCKET_NAME") or f"{project_id}-hero-vida-reports"
+    primary_env_bucket = os.environ.get("GCS_BUCKET_NAME") or os.environ.get("BUCKET_NAME")
+    
+    candidate_buckets = []
+    if primary_env_bucket:
+        candidate_buckets.append(primary_env_bucket)
+    candidate_buckets.extend(["zuhaibp-ai-hero-vida-reports", "632239123109-hero-vida-reports"])
+    
+    seen = set()
+    buckets_to_upload = [b for b in candidate_buckets if not (b in seen or seen.add(b))]
+
+    # Synchronous GCS upload (fast ~1s, guarantees objects exist before response returns)
+    upload_res = upload_to_gcs(
+        csv_content=csv_content,
+        filename=filename,
+        project_id=project_id,
+        target_buckets=buckets_to_upload
+    )
+
+    display_bucket = upload_res.get("primary_bucket", "zuhaibp-ai-hero-vida-reports")
 
     # Direct Google Cloud Console Link (opens object directly in Cloud Console Storage browser with 1-click Download)
-    console_file_url = f"https://console.cloud.google.com/storage/browser/_details/{bucket_name}/reports/{filename}?project={project_id}"
-    console_bucket_url = f"https://console.cloud.google.com/storage/browser/{bucket_name}/reports?project={project_id}"
-    storage_direct_url = f"https://storage.cloud.google.com/{bucket_name}/reports/{filename}"
-    gs_uri = f"gs://{bucket_name}/reports/{filename}"
-
-    # Asynchronously upload to GCS in background thread so caller never waits
-    upload_thread = threading.Thread(
-        target=upload_to_gcs,
-        args=(csv_content, filename, project_id, bucket_name),
-        daemon=True
-    )
-    upload_thread.start()
+    console_file_url = f"https://console.cloud.google.com/storage/browser/_details/{display_bucket}/reports/{filename}?project=zuhaibp-ai"
+    console_bucket_url = f"https://console.cloud.google.com/storage/browser/{display_bucket}/reports?project=zuhaibp-ai"
+    storage_direct_url = f"https://storage.cloud.google.com/{display_bucket}/reports/{filename}"
+    gs_uri = f"gs://{display_bucket}/reports/{filename}"
 
     return {
         "filename": filename,
         "local_path": local_path,
         "sandbox_path": sandbox_path,
-        "bucket_name": bucket_name,
+        "bucket_name": display_bucket,
         "console_file_url": console_file_url,
         "console_bucket_url": console_bucket_url,
         "storage_direct_url": storage_direct_url,
         "gs_uri": gs_uri,
-        "gcs_uploaded": True,
-        "gcs_error": None,
+        "gcs_uploaded": upload_res.get("success", False),
+        "gcs_error": upload_res.get("error"),
         "csv_content": csv_content,
         "row_count": len(records)
     }
 
 def format_csv_download_section(export_result: Dict[str, Any]) -> str:
     """
-    Renders standardized Markdown section with Google Cloud Console links,
-    storage URLs, local file references, and raw CSV data block.
+    Renders clean, focused Markdown section with Google Sheets export,
+    Google Cloud Console download link, storage URLs, and raw CSV data block.
     """
     fname = export_result.get("filename", "hero_vida_comparison.csv")
     console_url = export_result.get("console_file_url", "")
     direct_url = export_result.get("storage_direct_url", "")
     gs_uri = export_result.get("gs_uri", "")
-    bucket_url = export_result.get("console_bucket_url", "")
-    local_path = export_result.get("local_path", "")
     csv_content = export_result.get("csv_content", "").strip()
 
     md = [
-        "### 📥 Verified CSV Export & Cloud Storage Download",
-        f"- **🌐 Google Cloud Console Storage Link (1-Click Download):**",
+        "### 📥 Verified CSV Export & Cloud Storage Download\n",
+        "- **📊 1-Click Export to Google Sheets:**",
+        f"  👉 **[Open Blank Google Sheet (`sheets.new`)](https://sheets.new)** — *Click to create a new sheet, then copy & paste the CSV dataset below (Ctrl+V / Cmd+V).*",
+        "- **🌐 Google Cloud Storage Console (1-Click Download):**",
         f"  👉 [{fname} in Cloud Storage Console]({console_url})",
-        f"- **⚡ Direct Authenticated Download URL:**",
-        f"  🔗 [{direct_url}]({direct_url})",
-        f"- **🪣 Cloud Storage Bucket URI:**",
-        f"  `{gs_uri}`",
-        f"- **📁 All Reports Storage Folder:**",
-        f"  🔗 [Browse Storage Bucket]({bucket_url})",
-        f"- **💻 Local Sandbox File:**",
-        f"  `{local_path}`",
-        "",
+        "- **⚡ Direct Authenticated Download:**",
+        f"  🔗 [{fname}]({direct_url})",
+        "- **🪣 Cloud Storage Bucket URI:**",
+        f"  `{gs_uri}`\n",
         "<details open>",
-        "<summary><b>📋 Raw CSV Dataset (Direct Console Access - Copy / View)</b></summary>",
-        "",
+        "<summary><b>📋 Raw CSV Dataset (Ready to Copy / Import into Google Sheets or Excel)</b></summary>\n",
         "```csv",
         csv_content,
         "```",

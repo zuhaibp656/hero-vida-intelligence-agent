@@ -1,7 +1,7 @@
 {
   "oem": "Ather",
-  "timestamp": 1788862949,
-  "timestamp_str": "2026-09-08 15:52:29",
+  "timestamp": 1789119556,
+  "timestamp_str": "2026-09-11 15:09:16",
   "data": {
     "models": [
       {
@@ -258,20 +258,6 @@
       },
       {
         "oem": "Ather",
-        "model": "Ather 450S",
-        "battery_kwh": 3.7,
-        "range_km": 150,
-        "certified_range": "150 km",
-        "base_price": 158499.0,
-        "effective_price": 175520.0,
-        "top_speed": "90 km/h",
-        "active_offers": "• ₹3500 Introductory Offer",
-        "is_vida": false,
-        "city": "Bengaluru",
-        "source_url": "https://www.atherenergy.com/450x"
-      },
-      {
-        "oem": "Ather",
         "model": "Ather 450XAHR",
         "battery_kwh": 3.7,
         "range_km": 150,
@@ -280,6 +266,20 @@
         "effective_price": 203976.0,
         "top_speed": "80 km/h",
         "active_offers": "Standard Ex-Showroom (Official Portal)",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.atherenergy.com/450x"
+      },
+      {
+        "oem": "Ather",
+        "model": "Ather 450S",
+        "battery_kwh": 3.7,
+        "range_km": 150,
+        "certified_range": "150 km",
+        "base_price": 158499.0,
+        "effective_price": 175520.0,
+        "top_speed": "90 km/h",
+        "active_offers": "• ₹3500 Introductory Offer",
         "is_vida": false,
         "city": "Bengaluru",
         "source_url": "https://www.atherenergy.com/450x"
