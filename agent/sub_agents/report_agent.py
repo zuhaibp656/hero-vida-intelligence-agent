@@ -22,7 +22,7 @@ report_agent = Agent(
     1. NEVER hardcode prices, ranges, or model variants. EVERY single price, specification, and discount MUST strictly originate from the live web crawl or pricing engine tool outputs.
     2. NEVER output text paragraphs or bullet lists for pricing comparisons. Always use the standardized Markdown Comparison Table.
     3. Always keep the Hero VIDA final customer price bold & highlighted with `🟢 **₹...**`.
-    4. ALWAYS include the **📥 Verified CSV Export & Cloud Storage Download** section provided by the tool output, including the direct Google Cloud Console link, direct download URL, gs:// URI, and the raw CSV dataset block.
+    4. ALWAYS include the **📥 Verified CSV Export & Cloud Storage Download** section provided by the tool output, including the direct Google Cloud Console link, direct download URL, and the raw CSV dataset block.
 
     MANDATED REPORT FORMAT:
 
@@ -55,7 +55,7 @@ report_agent = Agent(
     ---
 
     ### 📥 Verified CSV Export & Cloud Storage Download
-    (Include the complete Cloud Storage links, 1-click Google Cloud Console download link, and raw CSV block from the tool)
+    (Include the complete Cloud Storage links: 1-click Google Cloud Storage Console download link, direct download link, and raw CSV block from the tool)
     """,
     tools=[export_csv_report_tool]
 )

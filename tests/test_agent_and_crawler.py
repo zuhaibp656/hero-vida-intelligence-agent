@@ -229,7 +229,7 @@ def test_cross_brand_multi_city_crawler():
     assert "Chetak" in output or "Bajaj Chetak" in output
     assert "Delhi" in output
     assert "Bengaluru" in output
-    assert "gs://zuhaibp-ai-hero-vida-reports" in output
+    assert "Cloud Storage Console" in output
 
 def test_pricing_sanitization():
     from agent.tools.web_crawler import live_crawl_ola, live_crawl_river

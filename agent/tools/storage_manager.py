@@ -333,27 +333,22 @@ def export_and_upload_csv(
 
 def format_csv_download_section(export_result: Dict[str, Any]) -> str:
     """
-    Renders clean, focused Markdown section with Google Sheets export,
-    Google Cloud Console download link, storage URLs, and raw CSV data block.
+    Renders clean, focused Markdown section with Cloud Storage 1-click download link,
+    direct download URL, and raw CSV data block.
     """
     fname = export_result.get("filename", "hero_vida_comparison.csv")
     console_url = export_result.get("console_file_url", "")
     direct_url = export_result.get("storage_direct_url", "")
-    gs_uri = export_result.get("gs_uri", "")
     csv_content = export_result.get("csv_content", "").strip()
 
     md = [
         "### 📥 Verified CSV Export & Cloud Storage Download\n",
-        "- **📊 1-Click Export to Google Sheets:**",
-        f"  👉 **[Open Blank Google Sheet (`sheets.new`)](https://sheets.new)** — *Click to create a new sheet, then copy & paste the CSV dataset below (Ctrl+V / Cmd+V).*",
         "- **🌐 Google Cloud Storage Console (1-Click Download):**",
         f"  👉 [{fname} in Cloud Storage Console]({console_url})",
         "- **⚡ Direct Authenticated Download:**",
-        f"  🔗 [{fname}]({direct_url})",
-        "- **🪣 Cloud Storage Bucket URI:**",
-        f"  `{gs_uri}`\n",
+        f"  🔗 [{fname}]({direct_url})\n",
         "<details open>",
-        "<summary><b>📋 Raw CSV Dataset (Ready to Copy / Import into Google Sheets or Excel)</b></summary>\n",
+        "<summary><b>📋 Raw CSV Dataset (Ready to Copy / Import into Spreadsheets)</b></summary>\n",
         "```csv",
         csv_content,
         "```",

@@ -1,7 +1,7 @@
 {
   "oem": "Chetak",
-  "timestamp": 1789119557,
-  "timestamp_str": "2026-09-11 15:09:17",
+  "timestamp": 1789196437,
+  "timestamp_str": "2026-09-12 12:30:37",
   "data": {
     "models": [
       {
@@ -286,6 +286,20 @@
       },
       {
         "oem": "Bajaj Chetak",
+        "model": "Chetak C3501",
+        "battery_kwh": 3.5,
+        "range_km": 153,
+        "certified_range": "153 km",
+        "base_price": 152140.0,
+        "effective_price": 152140.0,
+        "top_speed": "80 km/h",
+        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
+        "is_vida": false,
+        "city": "Delhi",
+        "source_url": "https://www.chetak.com/series-35/chetak-c3501"
+      },
+      {
+        "oem": "Bajaj Chetak",
         "model": "Chetak C3001",
         "battery_kwh": 3.0,
         "range_km": 131,
@@ -297,6 +311,20 @@
         "is_vida": false,
         "city": "Delhi",
         "source_url": "https://www.chetak.com/series-30/chetak-c3001"
+      },
+      {
+        "oem": "Bajaj Chetak",
+        "model": "Chetak C2501",
+        "battery_kwh": 2.5,
+        "range_km": 113,
+        "certified_range": "113 km",
+        "base_price": 95802.0,
+        "effective_price": 95802.0,
+        "top_speed": "60 km/h",
+        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
+        "is_vida": false,
+        "city": "Delhi",
+        "source_url": "https://www.chetak.com/series-25/chetak-c2501"
       },
       {
         "oem": "Bajaj Chetak",
@@ -323,22 +351,8 @@
         "top_speed": "80 km/h",
         "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
         "is_vida": false,
-        "city": "Delhi",
+        "city": "Bengaluru",
         "source_url": "https://www.chetak.com/series-35/chetak-c3501"
-      },
-      {
-        "oem": "Bajaj Chetak",
-        "model": "Chetak C2501",
-        "battery_kwh": 2.5,
-        "range_km": 113,
-        "certified_range": "113 km",
-        "base_price": 95802.0,
-        "effective_price": 95802.0,
-        "top_speed": "60 km/h",
-        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
-        "is_vida": false,
-        "city": "Delhi",
-        "source_url": "https://www.chetak.com/series-25/chetak-c2501"
       },
       {
         "oem": "Bajaj Chetak",
@@ -356,34 +370,6 @@
       },
       {
         "oem": "Bajaj Chetak",
-        "model": "Chetak C3502",
-        "battery_kwh": 3.5,
-        "range_km": 153,
-        "certified_range": "153 km",
-        "base_price": 136939.0,
-        "effective_price": 136939.0,
-        "top_speed": "80 km/h",
-        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
-        "is_vida": false,
-        "city": "Bengaluru",
-        "source_url": "https://www.chetak.com/series-35/chetak-c3502"
-      },
-      {
-        "oem": "Bajaj Chetak",
-        "model": "Chetak C3501",
-        "battery_kwh": 3.5,
-        "range_km": 153,
-        "certified_range": "153 km",
-        "base_price": 152140.0,
-        "effective_price": 152140.0,
-        "top_speed": "80 km/h",
-        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
-        "is_vida": false,
-        "city": "Bengaluru",
-        "source_url": "https://www.chetak.com/series-35/chetak-c3501"
-      },
-      {
-        "oem": "Bajaj Chetak",
         "model": "Chetak C2501",
         "battery_kwh": 2.5,
         "range_km": 113,
@@ -395,6 +381,20 @@
         "is_vida": false,
         "city": "Bengaluru",
         "source_url": "https://www.chetak.com/series-25/chetak-c2501"
+      },
+      {
+        "oem": "Bajaj Chetak",
+        "model": "Chetak C3502",
+        "battery_kwh": 3.5,
+        "range_km": 153,
+        "certified_range": "153 km",
+        "base_price": 136939.0,
+        "effective_price": 136939.0,
+        "top_speed": "80 km/h",
+        "active_offers": "Standard Ex-Showroom (Official Chetak Portal)",
+        "is_vida": false,
+        "city": "Bengaluru",
+        "source_url": "https://www.chetak.com/series-35/chetak-c3502"
       }
     ],
     "source_url": "https://www.chetak.com"
