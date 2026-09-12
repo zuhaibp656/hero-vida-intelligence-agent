@@ -241,4 +241,16 @@ def test_pricing_sanitization():
     for m in river:
         assert m["base_price"] >= 90000
 
+def test_specific_model_variant_filtering():
+    # User asks specifically for VX2 Go vs Bajaj Chetak in Pune with empty model_filter argument
+    output = run_crawler_tool("Show me prices and specs for Hero VIDA VX2 Go vs Bajaj Chetak in Pune.")
+    assert "Pune" in output
+    assert "VX2 GO" in output or "VX2 Go" in output
+    assert "Chetak" in output
+    # Must NOT contain unrelated models
+    assert "V2 PRO" not in output
+    assert "V2 LITE" not in output
+    assert "VX2 PLUS" not in output
+    assert "DIRT.E" not in output
+
 

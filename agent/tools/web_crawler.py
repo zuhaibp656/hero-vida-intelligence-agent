@@ -1082,12 +1082,19 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
     Synchronous Google ADK Agent Tool Entrypoint.
     Pulls live real-time master datasets from vidaworld.com and competitor sites with Sandbox resilience.
     Exports CSV file, uploads to Cloud Storage bucket, and returns verified Markdown table with direct console links.
+
+    Args:
+        target_query_or_url: The full user query or target OEM website URL (e.g. "Show me prices and specs for Hero VIDA VX2 Go vs Bajaj Chetak in Pune.").
+        city_name: Target city or cities (e.g. "Pune", "Delhi", "Bengaluru and Pune").
+        model_filter: Specific model variants or keywords to filter (e.g. "vx2 go", "v2 pro", "450x", "c3501"). IMPORTANT: When the user asks for a specific model (e.g. "Hero VIDA VX2 Go"), you MUST pass that model keyword here (e.g. "vx2 go") so unrelated models like V2 Pro are excluded. Pass "" ONLY if comparing all models.
     """
     # 1. Resolve cities
     c_from_name = parse_cities(city_name, default_to_bengaluru=False)
     c_from_url = parse_cities(target_query_or_url, default_to_bengaluru=False)
 
-    if len(c_from_url) > len(c_from_name):
+    if c_from_url and (city_name.lower().strip() in ["", "bengaluru", "national"] and not any(k in target_query_or_url.lower() for k in ["bengaluru", "blr", "bangalore"])):
+        resolved_cities = c_from_url
+    elif len(c_from_url) > len(c_from_name):
         resolved_cities = c_from_url
     elif c_from_name:
         resolved_cities = c_from_name
@@ -1098,6 +1105,13 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
 
     # 2. Resolve model filter
     effective_model_filter = model_filter.strip()
+    if not effective_model_filter and not target_query_or_url.startswith("http"):
+        # Auto-extract model filter from natural language query when not provided explicitly
+        effective_model_filter = target_query_or_url.strip()
+    elif effective_model_filter and not target_query_or_url.startswith("http"):
+        # Combine explicitly passed filter with query string to capture all brand variants
+        effective_model_filter = f"{effective_model_filter} {target_query_or_url.strip()}"
+
     target_url, brand = resolve_official_oem_url(target_query_or_url)
     
     # 3. Detect competitors mentioned in target_query_or_url, city_name, model_filter, or resolved brand

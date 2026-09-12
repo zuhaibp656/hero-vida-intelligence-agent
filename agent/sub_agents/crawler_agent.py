@@ -27,13 +27,14 @@ crawler_agent = Agent(
     - It saves all extracted datasets into the local Sandbox (`sandbox_data/`).
 
     Call `run_crawler_tool(target_query_or_url, city_name, model_filter)` passing:
-    - `target_query_or_url`: Full user comparison query or target brands with Hero VIDA.
+    - `target_query_or_url`: Full user comparison query or target brands with Hero VIDA verbatim.
     - `city_name`: The requested city or cities (e.g. "Bengaluru", "Pune", "Delhi", "Ahmedabad", or "Bengaluru and Pune").
-    - `model_filter`: Specific model variant keyword (e.g. "v2pro", "vx2", or "" for all).
-
+    - `model_filter`: Specific model variant keyword requested by the user (e.g. "vx2 go", "v2 pro", "450x", "c3501", or "" for all).
+    
     CRITICAL:
     - CALL `run_crawler_tool` ONLY ONCE for the entire query. NEVER make separate calls per brand.
     - `run_crawler_tool` automatically combines Hero VIDA and all requested competitors into ONE consolidated dataset and ONE CSV sheet.
+    - When a user asks for a specific model (e.g. "VX2 Go"), pass that model in `model_filter` so unrelated models (e.g. V2 Pro) are excluded.
 
     Return the verified crawl report directly to the main orchestrator agent.
     """,
