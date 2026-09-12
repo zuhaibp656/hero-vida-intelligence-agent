@@ -1161,9 +1161,21 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
 
     formatted_cities = [c.title() for c in resolved_cities]
 
+    brand_map = {
+        "ather": "Ather Energy",
+        "chetak": "Bajaj Chetak",
+        "tvs": "TVS iQube",
+        "ola": "Ola Electric",
+        "river": "River Mobility",
+        "vida": "Hero VIDA",
+        "hero vida": "Hero VIDA"
+    }
+
     table_rows = []
     for m in models:
         c_name = m.get("city", formatted_cities[0])
+        raw_k = m.get("oem", "Hero VIDA")
+        oem_val = brand_map.get(str(raw_k).lower().strip(), raw_k)
         model_name = m.get("model", "")
         bat = f"{m.get('battery_kwh', 3.4)} kWh"
         rng = f"{m.get('range_km', 140)} km"
@@ -1179,24 +1191,19 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
         eff_display = f"**🟢 {eff_p}**" if is_vida else f"**{eff_p}**"
         
         table_rows.append(
-            f"| **{c_name}** | {prefix}{model_name}{suffix} | {bat} | {rng} | {speed} | {base_p} | {eff_display} | {offers} | [Official Portal]({src}) |"
+            f"| **{c_name}** | **{oem_val}** | {prefix}{model_name}{suffix} | {bat} | {rng} | {speed} | {base_p} | {eff_display} | {offers} | [Official Portal]({src}) |"
         )
 
     # 6. Export to CSV file & Upload to Cloud Storage Bucket
-    clean_ctx = f"{brand}_{'_'.join(resolved_cities[:3])}"
+    if detected_comp_keys:
+        comp_tag = "_vs_".join(detected_comp_keys)
+        clean_ctx = f"hero_vida_vs_{comp_tag}_{'_'.join(resolved_cities[:2])}"
+    else:
+        clean_ctx = f"{brand}_{'_'.join(resolved_cities[:3])}"
     export_result = export_and_upload_csv(models, query_context=clean_ctx)
     csv_section_md = format_csv_download_section(export_result)
 
     # Collect all official OEM portals crawled/checked
-    brand_map = {
-        "ather": "Ather Energy",
-        "chetak": "Bajaj Chetak",
-        "tvs": "TVS iQube",
-        "ola": "Ola Electric",
-        "river": "River Mobility",
-        "vida": "Hero VIDA",
-        "hero vida": "Hero VIDA"
-    }
     oem_portals: Dict[str, str] = {}
     for m in models:
         raw_k = m.get("oem", "Hero VIDA")
@@ -1224,8 +1231,8 @@ def run_crawler_tool(target_query_or_url: str = "https://www.vidaworld.com", cit
         portals_bullet,
         f"- **Data Ingestion Mode:** `{crawl_mode}` (100% Real-Time Live Feed — Zero Static Hardcoding & Zero Cache)",
         f"- **Sandbox Status:** Verified & stored in local Sandbox (`sandbox_data/`)\n",
-        "| City | Model & Variant | Battery Capacity | Certified Range | Top Speed | Base Ex-Showroom | ⭐ Final Effective Price | Active Discounts & Offers | Verified Official Source |",
-        "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |"
+        "| City | OEM / Brand | Model & Variant | Battery Capacity | Certified Range | Top Speed | Base Ex-Showroom | ⭐ Final Customer Price | Active Discounts & Subsidies | Verified Source Link |",
+        "| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |"
     ]
     output.extend(table_rows)
     output.append("\n---")
